@@ -128,13 +128,14 @@ export async function POST(request) {
             session_name: payload.session_name || 'Untitled',
             character_name: payload.agent || 'AGENT',
             image_url: body.image_url || null,
-            ciphertext: ciphertext,
+            // If no real ciphertext provided, store the payload as JSON so agents
+            // can recover session context without encryption keys via /q/<id>
+            ciphertext: (ciphertext && ciphertext !== 'stored-via-production')
+                ? (iv ? `${iv}:${ciphertext}` : ciphertext)
+                : JSON.stringify(payload),
             signature: signature || null,
             algorithm: algorithm || 'HMAC-SHA256'
         }
-
-        // Add iv to ciphertext representation if provided
-        if (iv) dbRecord.ciphertext = `${iv}:${ciphertext}`;
 
         const { error: insertError } = await supabase
             .from('memories')
