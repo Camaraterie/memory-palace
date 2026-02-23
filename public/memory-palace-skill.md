@@ -139,7 +139,66 @@ This starts a stdio-based MCP server exposing two tools:
 
 - **You have MCP support?** Use the `save` and `recover` MCP tools. They handle encryption and signing automatically.
 - **You have terminal access but no MCP?** Use the CLI commands directly.
-- **You have neither?** Use raw `curl` calls to `https://m.cuer.ai/api/store` (see API docs below). You must handle encryption and signing yourself.
+- **You have neither (e.g. ChatGPT web)?** Use the `share` command on the CLI side to generate a self-contained Python decrypt block (see below).
+- **Last resort only:** Raw `curl` calls to `https://m.cuer.ai/api/store` — you must handle encryption and signing yourself.
+
+---
+
+### Web Agent Access (e.g. ChatGPT)
+
+Web-based agents without terminal access can still decrypt memories using Python's `cryptography` library in their code interpreter. Memory Palace uses standard AES-256-GCM with HKDF-SHA256 key derivation — fully implementable in pure Python.
+
+**On the CLI side** (the palace owner runs this once per memory they want to share):
+
+```bash
+mempalace share <short_id>
+```
+
+This fetches the encrypted memory and outputs a self-contained Python snippet with the ciphertext pre-embedded. Paste it into ChatGPT. The `palace_key` is **not** included — ChatGPT will prompt the user for it at runtime via `input()`, so you consciously decide when to share it.
+
+**Security model:**
+- Ciphertext on the server is gated by guest keys (revocable per-agent)
+- `palace_id` is not secret
+- `palace_key` is the only master secret — it never appears in share output
+- The server never decrypts; ChatGPT decrypts locally in its code interpreter
+- You can revoke a guest key without rotating your `palace_key`
+
+**Giving ChatGPT ongoing API access** (for live recall without CLI):
+
+1. Run `mempalace invite chatgpt` — get a `gk_` guest key
+2. Share `guest_key`, `palace_key`, and `palace_id` with ChatGPT
+3. ChatGPT fetches + decrypts in one Python block:
+
+```python
+from cryptography.hazmat.primitives.kdf.hkdf import HKDF
+from cryptography.hazmat.primitives import hashes
+from cryptography.hazmat.primitives.ciphers.aead import AESGCM
+import base64, json, urllib.request
+
+GUEST_KEY  = "<your_gk_key>"
+PALACE_KEY = "<your_palace_key>"   # keep secret; share consciously
+PALACE_ID  = "<your_palace_id>"
+SHORT_ID   = "<short_id>"
+
+req = urllib.request.Request(
+    f"https://m.cuer.ai/api/recall?short_id={SHORT_ID}",
+    headers={"Authorization": f"Bearer {GUEST_KEY}"}
+)
+data = json.loads(urllib.request.urlopen(req).read())
+iv_b64, auth_b64, ct_b64 = data["memory"]["ciphertext"].split(":")
+
+key = HKDF(
+    algorithm=hashes.SHA256(), length=32,
+    salt=PALACE_ID.encode(), info=b"memory_palace_encryption"
+).derive(bytes.fromhex(PALACE_KEY))
+
+aesgcm = AESGCM(key)
+ct_with_tag = base64.b64decode(ct_b64) + base64.b64decode(auth_b64)
+payload = json.loads(aesgcm.decrypt(base64.b64decode(iv_b64), ct_with_tag, None))
+print(json.dumps(payload, indent=2))
+```
+
+---
 
 ## Agent Roster
 

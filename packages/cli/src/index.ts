@@ -6,6 +6,7 @@ import { saveMemoryCommand } from './save';
 import { runMcpServer } from './mcp';
 import { authCommand } from './auth';
 import { inviteAgent, revokeAgent, listAgents } from './agents';
+import { shareMemory } from './share';
 
 const program = new Command();
 
@@ -88,6 +89,13 @@ program
     .description('List all agents and their guest keys')
     .action(async () => {
         await listAgents();
+    });
+
+program
+    .command('share <short_id>')
+    .description('Generate a self-contained Python decrypt snippet for web agents (e.g. ChatGPT)')
+    .action(async (short_id) => {
+        await shareMemory(short_id);
     });
 
 program
