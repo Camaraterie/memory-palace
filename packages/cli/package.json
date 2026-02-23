@@ -1,11 +1,18 @@
 {
-  "name": "@cuer/memory-palace",
-  "version": "2.0.0",
-  "description": "Cryptographically signed session memory for AI agents",
+  "name": "mempalace",
+  "version": "1.0.0",
+  "description": "Cryptographically signed visual memory for AI agents. Self-bootstrapping session handoff across any agent.",
   "main": "dist/index.js",
   "bin": {
+    "mempalace": "./dist/index.js",
     "memory-palace": "./dist/index.js"
   },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Camaraterie/memory-palace.git",
+    "directory": "packages/cli"
+  },
+  "homepage": "https://m.cuer.ai",
   "scripts": {
     "build": "tsc",
     "start": "node dist/index.js"
@@ -13,9 +20,13 @@
   "keywords": [
     "mcp",
     "ai",
-    "memory"
+    "memory",
+    "agent",
+    "memory-palace",
+    "session-memory",
+    "visual-memory"
   ],
-  "author": "Memory Palace",
+  "author": "CueR.ai",
   "license": "ISC",
   "type": "commonjs",
   "dependencies": {
