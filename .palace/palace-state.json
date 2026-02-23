@@ -187,8 +187,52 @@
             ],
             "blockers": [],
             "prev": "mem-125",
+            "next": "mem-127"
+        },
+        {
+            "id": "mem-127",
+            "timestamp": "2026-02-23T07:07:00Z",
+            "agent": "antigravity",
+            "room": "infra",
+            "image_path": ".palace/memories/mem-127.png",
+            "prompt_path": ".palace/prompts/mem-127.txt",
+            "qr_url": "https://m.cuer.ai/q/xojiwus",
+            "summary": "Published mempalace@1.0.0 to npm, created /api/scan/verify, self-bootstrapping placard on all images, diegetic QR templates, repo/branch fields, git repo init + GitHub push, Vercel deploy.",
+            "outcome": "succeeded",
+            "repo": "https://github.com/Camaraterie/memory-palace.git",
+            "branch": "master",
+            "artifacts": [
+                {
+                    "path": "public/memory-palace-skill.md",
+                    "description": "Rewrote /store protocol: CLI-first, MCP, agent-branching, diegetic QR, self-bootstrapping placard"
+                },
+                {
+                    "path": "app/api/scan/verify/route.js",
+                    "description": "Lightweight scan-verify endpoint"
+                },
+                {
+                    "path": "packages/cli/package.json",
+                    "description": "Renamed to mempalace, published v1.0.0"
+                },
+                {
+                    "path": "packages/cli/src/config.ts",
+                    "description": "Added repo/branch to MemoryPayload"
+                },
+                {
+                    "path": ".gitignore",
+                    "description": "Git repo initialized"
+                }
+            ],
+            "next_steps": [
+                "Build HTML page for /q/ routes",
+                "Test diegetic QR across art styles",
+                "Consolidate /store into single CLI command",
+                "Add README.md to npm package"
+            ],
+            "blockers": [],
+            "prev": "mem-126",
             "next": null
         }
     ],
-    "total_memories": 5
+    "total_memories": 6
 }
