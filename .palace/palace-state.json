@@ -266,8 +266,45 @@
             ],
             "blockers": [],
             "prev": "mem-127",
+            "next": "mem-129"
+        },
+        {
+            "id": "mem-129",
+            "timestamp": "2026-02-23T08:29:00Z",
+            "agent": "antigravity",
+            "room": "infra",
+            "image_path": ".palace/memories/mem-129.png",
+            "prompt_path": ".palace/prompts/mem-129.txt",
+            "qr_url": "https://m.cuer.ai/q/2rhcp8a",
+            "summary": "Per-Agent Guest Keys architecture designed. Three-tier access: Visual/QR-metadata/Decrypt. Handoff to Claude Code for implementation.",
+            "outcome": "succeeded",
+            "repo": "https://github.com/Camaraterie/memory-palace.git",
+            "branch": "master",
+            "artifacts": [
+                {
+                    "path": "app/q/[id]/route.js",
+                    "description": "NEEDS FIX: leaks plaintext payload, must return metadata only"
+                },
+                {
+                    "path": "app/api/store/route.js",
+                    "description": "NEEDS FIX: should require real encryption"
+                },
+                {
+                    "path": "packages/cli/src/recover.ts",
+                    "description": "NEEDS FIX: should use guest key auth for server-side decryption"
+                }
+            ],
+            "next_steps": [
+                "Implement guest key system (agents table, /api/palace/agents, /api/recall)",
+                "Fix /q/ to hide payload",
+                "Add CLI commands: auth, invite, revoke, agents",
+                "Build settings page at m.cuer.ai/settings",
+                "Publish mempalace@1.1.0"
+            ],
+            "blockers": [],
+            "prev": "mem-128",
             "next": null
         }
     ],
-    "total_memories": 7
+    "total_memories": 8
 }
