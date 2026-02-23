@@ -231,8 +231,43 @@
             ],
             "blockers": [],
             "prev": "mem-126",
+            "next": "mem-128"
+        },
+        {
+            "id": "mem-128",
+            "timestamp": "2026-02-23T07:57:00Z",
+            "agent": "antigravity",
+            "room": "infra",
+            "image_path": ".palace/memories/mem-128.png",
+            "prompt_path": ".palace/prompts/mem-127.txt",
+            "qr_url": "https://m.cuer.ai/q/qbniguy",
+            "summary": "Fixed cold-start recovery: /q/ serves readable payload JSON, store route persists session data, mempalace@1.0.0 on npm, self-bootstrapping placard, X-LLM-Skill header. Image generated via Gemini API.",
+            "outcome": "succeeded",
+            "repo": "https://github.com/Camaraterie/memory-palace.git",
+            "branch": "master",
+            "artifacts": [
+                {
+                    "path": "app/q/[id]/route.js",
+                    "description": "Rewrote to serve clean agent-readable JSON with full session context"
+                },
+                {
+                    "path": "app/api/store/route.js",
+                    "description": "Persists payload JSON when no real encryption"
+                },
+                {
+                    "path": "packages/cli/package.json",
+                    "description": "Published as mempalace@1.0.0"
+                }
+            ],
+            "next_steps": [
+                "Test cold-start with Claude Code using only the image",
+                "Build HTML page for /q/ routes",
+                "Consolidate /store into single CLI command"
+            ],
+            "blockers": [],
+            "prev": "mem-127",
             "next": null
         }
     ],
-    "total_memories": 6
+    "total_memories": 7
 }
