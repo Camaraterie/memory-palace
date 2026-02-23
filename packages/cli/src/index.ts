@@ -4,13 +4,15 @@ import { initCommand } from './init';
 import { recoverMemory } from './recover';
 import { saveMemoryCommand } from './save';
 import { runMcpServer } from './mcp';
+import { authCommand } from './auth';
+import { inviteAgent, revokeAgent, listAgents } from './agents';
 
 const program = new Command();
 
 program
     .name('memory-palace')
     .description('Memory Palace CLI for agents')
-    .version('2.0.0');
+    .version('1.1.0');
 
 program
     .command('init')
@@ -60,6 +62,35 @@ program
     });
 
 program
+    .command('auth <guest_key>')
+    .description('Save a guest key to config (mempalace auth gk_xxxx)')
+    .action(async (guest_key) => {
+        await authCommand(guest_key);
+    });
+
+program
+    .command('invite <agent_name>')
+    .description('Create a guest key for an agent')
+    .option('--permissions <level>', 'read, write, or admin (default: read)', 'read')
+    .action(async (agent_name, options) => {
+        await inviteAgent(agent_name, options.permissions);
+    });
+
+program
+    .command('revoke <agent_name>')
+    .description('Revoke a guest key by agent name')
+    .action(async (agent_name) => {
+        await revokeAgent(agent_name);
+    });
+
+program
+    .command('agents')
+    .description('List all agents and their guest keys')
+    .action(async () => {
+        await listAgents();
+    });
+
+program
     .command('mcp')
     .description('Start MCP server over stdio')
     .action(async () => {
@@ -69,7 +100,6 @@ program
 program
     .option('--verify-sig', 'Verify CLI integrity (mocked)')
     .action((options) => {
-        // As a mock for the verify-sig requirement
         if (options.verifySig) {
             console.log("Validating CLI binary signature...");
             console.log("✓ signature verified: VALID");

@@ -39,31 +39,53 @@ export function createTrustEnvelope(payload: any, shortId: string, isValid: bool
 
 export async function recoverMemory(shortId: string, returnEnvelope: boolean = false) {
     const conf = getConfig();
+    const authToken = conf.guest_key || conf.palace_id;
+
     try {
-        const raw = await getMemoryRaw(conf.palace_id, shortId);
+        const raw = await getMemoryRaw(authToken, shortId);
 
-        // Decrypt
-        // ciphertext is "iv:authTag:actualCipher" ? No, api.ts packed it as "iv:authTag:ciphertext" ?
-        // Let's ensure uniform structure. Wait api.ts sent it as `iv:authTag:ciphertext` ?
-        // Actually api.ts: const combinedIv = `${iv}:${authTag}`; dbRecord.ciphertext = `${iv}:${ciphertext}`;
-        // Let's fix that formatting difference. We'll split on `:` safely.
+        // Try to parse as JSON first — plaintext (legacy) records
+        let plaintextPayload: any = null;
+        try {
+            plaintextPayload = JSON.parse(raw.ciphertext);
+        } catch (e) {
+            // not plaintext
+        }
 
-        let ivB64, ciphertextB64, authTagB64;
+        if (plaintextPayload !== null) {
+            // Legacy plaintext memory — can't verify signature, treat as UNVERIFIED
+            const env = {
+                type: "memory_context",
+                trust_level: "UNVERIFIED",
+                signature_valid: false,
+                short_id: shortId,
+                retrieved_at: new Date().toISOString(),
+                note: "This memory was stored as plaintext and cannot be cryptographically verified.",
+                content: plaintextPayload
+            };
+            if (returnEnvelope) return env;
+            console.log(JSON.stringify(env, null, 2));
+            return;
+        }
+
+        // Encrypted memory — split iv:authTag:ciphertext
         const parts = raw.ciphertext.split(':');
+        if (parts.length !== 3) {
+            throw new Error("Invalid ciphertext format. Expected iv:authTag:ciphertext.");
+        }
 
-        if (parts.length === 3) { // Our newest format: iv:authTag:ciphertext
-            ivB64 = parts[0];
-            authTagB64 = parts[1];
-            ciphertextB64 = parts[2];
-        } else {
-            throw new Error("Invalid ciphertext format stored.");
+        const [ivB64, authTagB64, ciphertextB64] = parts;
+
+        if (!conf.palace_key) {
+            console.error('This memory is encrypted. palace_key is required to decrypt.');
+            console.error('Run `mempalace init` to set up your palace key.');
+            process.exit(1);
         }
 
         const payload = decryptPayload(conf.palace_key, conf.palace_id, ciphertextB64, ivB64, authTagB64);
 
-        // Verify signature assuming algorithm Ed25519
         let isValid = false;
-        if (raw.signature) {
+        if (raw.signature && conf.public_key) {
             isValid = verifySignature(conf.public_key, raw.signature, payload);
         }
 

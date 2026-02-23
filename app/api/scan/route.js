@@ -47,7 +47,7 @@ export async function POST(request) {
         // Fetch the full memory record
         const { data: memoryData, error } = await supabase
             .from('memories')
-            .select('*')
+            .select('short_id, agent, created_at')
             .eq('short_id', shortId)
             .single()
 
@@ -62,9 +62,10 @@ export async function POST(request) {
             success: true,
             short_id: shortId,
             memory_url: shortUrl,
-            ciphertext: memoryData.ciphertext,
-            signature: memoryData.signature,
-            note: "Decrypt locally using your palace_key via the CLI or MCP tool"
+            agent: memoryData.agent,
+            created_at: memoryData.created_at,
+            recover: `mempalace recover ${shortId}`,
+            note: "Use the CLI to decrypt: mempalace recover " + shortId
         })
 
     } catch (error) {

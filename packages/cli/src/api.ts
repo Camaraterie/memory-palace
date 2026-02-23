@@ -15,9 +15,9 @@ export async function createPalace(publicKey: string): Promise<string> {
     return data.palace_id;
 }
 
-export async function getMemories(palaceId: string, limit: number = 10): Promise<any> {
+export async function getMemories(authToken: string, limit: number = 10): Promise<any> {
     const res = await fetch(`${API_BASE}/api/recall?limit=${limit}`, {
-        headers: { 'Authorization': `Bearer ${palaceId}` }
+        headers: { 'Authorization': `Bearer ${authToken}` }
     });
     if (!res.ok) throw new Error(`Failed to list: ${await res.text()}`);
     return await res.json();
@@ -35,11 +35,13 @@ export async function storeMemory(config: Config, payload: any, imageUrl?: strin
         image_url: imageUrl
     };
 
+    const authToken = config.guest_key || config.palace_id;
+
     const res = await fetch(`${API_BASE}/api/store`, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${config.palace_id}`
+            'Authorization': `Bearer ${authToken}`
         },
         body: JSON.stringify(body)
     });
@@ -61,11 +63,13 @@ export async function scanImage(imagePath: string) {
     return (await res.json()) as any;
 }
 
-export async function getMemoryRaw(palaceId: string, shortId: string) {
-    const data = await getMemories(palaceId, 50); // Just fetch 50 and find it for simplicity, since /recall doesn't do short_id lookup
-    // Wait, we need an endpoint to fetch by short_id.
-    // If not, we filter from recall:
-    const mem = data.memories.find((m: any) => m.short_id === shortId);
-    if (!mem) throw new Error('NOT_FOUND');
-    return mem;
+export async function getMemoryRaw(authToken: string, shortId: string) {
+    const res = await fetch(`${API_BASE}/api/recall?short_id=${encodeURIComponent(shortId)}`, {
+        headers: { 'Authorization': `Bearer ${authToken}` }
+    });
+    if (res.status === 404) throw new Error('NOT_FOUND');
+    if (!res.ok) throw new Error(`Failed to fetch memory: ${await res.text()}`);
+    const data = await res.json() as any;
+    if (!data.memory) throw new Error('NOT_FOUND');
+    return data.memory;
 }

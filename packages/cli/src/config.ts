@@ -7,6 +7,7 @@ export interface Config {
     palace_key: string;
     public_key: string;
     gemini_key?: string;
+    guest_key?: string;
 }
 
 const CONFIG_DIR = path.join(os.homedir(), '.memorypalace');

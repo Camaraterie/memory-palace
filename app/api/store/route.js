@@ -55,6 +55,37 @@ function validateSchema(payload) {
     return true;
 }
 
+async function resolveStoreAuth(supabase, authHeader) {
+    if (!authHeader || !authHeader.startsWith('Bearer ')) return null
+    const token = authHeader.split(' ')[1]
+
+    if (token.startsWith('gk_')) {
+        const { data, error } = await supabase
+            .from('agents')
+            .select('palace_id, permissions, active')
+            .eq('guest_key', token)
+            .single()
+        if (error || !data || !data.active) return null
+        if (!['write', 'admin'].includes(data.permissions)) return null
+        // Fetch palace for public_key
+        const { data: palace, error: pe } = await supabase
+            .from('palaces')
+            .select('id, public_key')
+            .eq('id', data.palace_id)
+            .single()
+        if (pe || !palace) return null
+        return palace
+    }
+
+    const { data, error } = await supabase
+        .from('palaces')
+        .select('id, public_key')
+        .eq('id', token)
+        .single()
+    if (error || !data) return null
+    return data
+}
+
 export async function POST(request) {
     try {
         const body = await request.json()
@@ -63,19 +94,10 @@ export async function POST(request) {
         const supabase = createSupabaseAdmin()
 
         const authHeader = request.headers.get('authorization')
-        if (!authHeader || !authHeader.startsWith('Bearer ')) {
-            return NextResponse.json({ error: 'Missing or invalid Authorization header.' }, { status: 401 })
-        }
-        const apiKey = authHeader.split(' ')[1]
+        const palaceData = await resolveStoreAuth(supabase, authHeader)
 
-        const { data: palaceData, error: palaceError } = await supabase
-            .from('palaces')
-            .select('id, public_key')
-            .eq('id', apiKey)
-            .single()
-
-        if (palaceError || !palaceData) {
-            return NextResponse.json({ error: 'Invalid Palace API Key.' }, { status: 403 })
+        if (!palaceData) {
+            return NextResponse.json({ error: 'Invalid or unauthorized API key.' }, { status: 403 })
         }
 
         // Validate Schema

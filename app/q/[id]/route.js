@@ -9,7 +9,7 @@ export async function GET(request, context) {
 
         const { data: memoryData, error } = await supabase
             .from('memories')
-            .select('*')
+            .select('short_id, agent, created_at, ciphertext')
             .eq('short_id', shortId)
             .single()
 
@@ -17,21 +17,19 @@ export async function GET(request, context) {
             return new NextResponse('Memory Record Not Found', { status: 404 })
         }
 
-        // Try to parse ciphertext as JSON — if it parses, it's a plaintext payload
-        // If it doesn't parse, it's encrypted and needs CLI decryption
-        let payload = null
+        // Determine if encrypted without leaking the ciphertext
         let encrypted = true
         try {
-            payload = JSON.parse(memoryData.ciphertext)
+            JSON.parse(memoryData.ciphertext)
             encrypted = false
         } catch (e) {
-            // ciphertext is encrypted — can't serve plaintext
+            // encrypted
         }
 
         const response = {
             short_id: shortId,
             agent: memoryData.agent,
-            session_name: memoryData.session_name,
+
             created_at: memoryData.created_at,
             encrypted: encrypted,
             skill: 'https://m.cuer.ai/memory-palace-skill.md',
@@ -39,27 +37,8 @@ export async function GET(request, context) {
             recover: `mempalace recover ${shortId}`,
         }
 
-        if (!encrypted && payload) {
-            // Serve the full readable session context
-            response.payload = {
-                session_name: payload.session_name,
-                agent: payload.agent,
-                status: payload.status,
-                outcome: payload.outcome,
-                built: payload.built,
-                decisions: payload.decisions,
-                next_steps: payload.next_steps,
-                files: payload.files,
-                blockers: payload.blockers,
-                conversation_context: payload.conversation_context,
-                repo: payload.repo,
-                branch: payload.branch,
-            }
-        } else {
-            // Can't decrypt — give the agent instructions
+        if (encrypted) {
             response.note = 'This memory is encrypted. Use the CLI to decrypt: mempalace recover ' + shortId
-            response.ciphertext = memoryData.ciphertext
-            response.signature = memoryData.signature
         }
 
         return NextResponse.json(response, {

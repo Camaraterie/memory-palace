@@ -5,23 +5,29 @@ import { decryptPayload, verifySignature } from './crypto';
 export async function verifyMemory(shortId: string) {
     try {
         const conf = getConfig();
-        const raw = await getMemoryRaw(conf.palace_id, shortId);
+        const authToken = conf.guest_key || conf.palace_id;
+        const raw = await getMemoryRaw(authToken, shortId);
 
-        let ivB64, ciphertextB64, authTagB64;
+        // Plaintext (legacy) detection
+        try {
+            JSON.parse(raw.ciphertext);
+            console.log("UNVERIFIED (plaintext memory — no cryptographic signature possible)");
+            return "UNVERIFIED";
+        } catch (e) {
+            // encrypted
+        }
+
         const parts = raw.ciphertext.split(':');
-
-        if (parts.length === 3) {
-            ivB64 = parts[0];
-            authTagB64 = parts[1];
-            ciphertextB64 = parts[2];
-        } else {
+        if (parts.length !== 3) {
             console.log(`TAMPERED (Invalid structural ciphertext)`);
             return "TAMPERED";
         }
 
+        const [ivB64, authTagB64, ciphertextB64] = parts;
+
         const payload = decryptPayload(conf.palace_key, conf.palace_id, ciphertextB64, ivB64, authTagB64);
 
-        if (raw.signature) {
+        if (raw.signature && conf.public_key) {
             const isValid = verifySignature(conf.public_key, raw.signature, payload);
             if (isValid) {
                 console.log("VALID");

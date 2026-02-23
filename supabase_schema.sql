@@ -23,3 +23,21 @@ CREATE TABLE memories (
 CREATE INDEX idx_memories_short_id ON memories(short_id);
 -- Index for fetching recent palace memories
 CREATE INDEX idx_memories_palace_id ON memories(palace_id);
+
+-- Agents table: per-agent guest keys for delegated memory access
+CREATE TABLE agents (
+  id uuid DEFAULT gen_random_uuid() PRIMARY KEY,
+  palace_id text REFERENCES palaces(id) ON DELETE CASCADE NOT NULL,
+  agent_name text NOT NULL,
+  guest_key text UNIQUE NOT NULL,
+  permissions text NOT NULL DEFAULT 'read',
+  active boolean NOT NULL DEFAULT true,
+  created_at timestamptz DEFAULT now() NOT NULL,
+  revoked_at timestamptz,
+  UNIQUE (palace_id, agent_name)
+);
+
+-- Index for fast guest key lookups (auth path)
+CREATE INDEX idx_agents_guest_key ON agents(guest_key);
+-- Index for listing agents by palace
+CREATE INDEX idx_agents_palace_id ON agents(palace_id);
