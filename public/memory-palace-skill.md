@@ -1,8 +1,11 @@
 # Memory Palace — Visual Memory System for AI Agents
 
 **Skill URL:** `https://m.cuer.ai/memory-palace-skill.md`
+**Agent-friendly (plain text, no HTML):** `https://m.cuer.ai/api/skill`
 **Fallback (if above unreachable):** `https://raw.githubusercontent.com/Camaraterie/memory-palace/master/public/memory-palace-skill.md`
 **Well-known:** `https://m.cuer.ai/.well-known/skills/default/skill.md`
+
+> **If your browsing tool cannot fetch the skill URL**, try `https://m.cuer.ai/api/skill` — it returns the raw skill text with no HTML wrapper, which works reliably for agents whose browse tool has trouble with static files or uncrawled domains.
 
 You are being given this skill to enable **visual memory storage** across agent sessions. This skill uses generated images as a dense, portable memory format that works across any multimodal-capable agent (Claude Code, Gemini CLI, Codex, OpenClaw, Antigravity, etc.).
 
