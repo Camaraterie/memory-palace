@@ -11,7 +11,6 @@ Two remotes are maintained in parallel:
 
 **Standard milestone push:**
 ```bash
-git push cuer-bot master && git push origin master
+git push cuer-bot master
+gh auth switch --user Camaraterie && git push origin master && gh auth switch --user cuer-bot
 ```
-
-If `origin` returns 403 (cuer-bot token rejected by Camaraterie repo), push `origin` manually with the Camaraterie account.
