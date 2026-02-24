@@ -313,7 +313,11 @@ print(url)
 }
 ```
 
-After storing: `GET https://m.cuer.ai/q/<short_id>` (no auth) to verify the capsule is live.
+After storing:
+- Verify capsule: `GET https://m.cuer.ai/q/<short_id>` (no auth)
+- **Fetch QR PNG for image generation: `GET https://m.cuer.ai/q/<short_id>/qr` (no auth) → `image/png`**
+
+Use the QR PNG in Step 5. Do not skip this — passing it to your image tool is mandatory.
 
 **Note:** Memories stored via `/api/ingest` are saved as **plaintext** (not encrypted). This is fine — guest keys gate write access and HTTPS protects transport. The user can later encrypt plaintext memories via `mempalace seal` if desired.
 
@@ -698,17 +702,15 @@ curl -s -X POST "https://m.cuer.ai/api/store" \
 }
 ```
 
-**Immediately save the QR code image** from the response:
+**Note the `short_id`.** You will use it to fetch the QR PNG in Step 5.
 
-```bash
-echo "$RESPONSE" | node -e "
-  const fs = require('fs');
-  const data = JSON.parse(require('fs').readFileSync('/dev/stdin','utf8'));
-  const b64 = data.qr_code.replace('data:image/png;base64,','');
-  fs.writeFileSync('.palace/qr-temp.png', Buffer.from(b64,'base64'));
-  console.log('QR saved for short_id:', data.short_id);
-"
+The `qr_code` field in the response is a base64 string — you do **not** need to decode it manually. Instead, use the dedicated QR endpoint in Step 5:
+
 ```
+GET https://m.cuer.ai/q/<short_id>/qr
+```
+
+This returns the QR code directly as a `image/png` file. No auth, no base64. Any browsing tool or image tool can use it directly.
 
 The QR code is generated server-side with `ERROR_CORRECT_H` (30% damage tolerance) and 512px width. **Do not generate QR codes yourself** — the backend does this automatically.
 
@@ -716,7 +718,15 @@ Replace `SHORT_ID` in the image prompt's data matrix panel text with the actual 
 
 ### Step 5: Generate the Memory Image
 
-The image prompt (from Step 2) includes the comic strip panels. The data matrix panel must contain a real, scannable QR code — **image models cannot generate valid QR codes**, they hallucinate fake patterns. The strategy depends on whether your image tool supports reference images.
+> **⚠ MANDATORY: You MUST pass the real QR PNG to your image tool.**
+>
+> Every image generation and editing model — without exception — will hallucinate a fake, unscannble QR pattern if you describe one in text. The prompt alone is never enough. You **must** pass the actual QR image file alongside the prompt. Skipping this produces a placeholder or a broken QR. There are no exceptions to this rule.
+>
+> Fetch the QR PNG for your `short_id` before calling any image tool:
+> ```
+> GET https://m.cuer.ai/q/<short_id>/qr   → image/png, no auth required
+> ```
+> Download or save this file first. Then pass it to your image tool as described in the paths below.
 
 **Choose your method based on your agent's capabilities:**
 
@@ -726,7 +736,8 @@ The image prompt (from Step 2) includes the comic strip panels. The data matrix 
 
 If your environment has an image generation or editing tool that accepts a reference or input image (e.g. Antigravity's `generate_image`, Gemini's image tool, or any tool with an `input_image` / `reference_images` parameter):
 
-Pass the **full prompt** from Step 2 **and** the QR PNG from Step 4 together. The model will composite the real QR into the data matrix panel.
+1. Fetch the QR PNG: `GET https://m.cuer.ai/q/<short_id>/qr` — save it as `.palace/qr-temp.png`
+2. Pass the **full prompt** from Step 2 **and** the QR PNG together to your image tool:
 
 ```
 generate_image(
@@ -761,21 +772,21 @@ Call your image generation tool with this modified prompt. Save the result to `.
 
 **Step B2 — Composite the real QR over the placeholder using Python.**
 
-Run this in your code interpreter. It decodes the `qr_code` base64 from the Step 4 response and pastes it into the bottom-right panel:
+Run this in your code interpreter. It fetches the QR PNG directly from the server using the `short_id` and pastes it into the bottom-right panel:
 
 ```python
-import base64, json
+import urllib.request
 from PIL import Image
 from io import BytesIO
 
 # --- inputs ---
+SHORT_ID     = "<short_id from Step 4 response>"
 BASE_IMAGE   = ".palace/memories/MEMORY_ID-base.png"
 OUTPUT_IMAGE = ".palace/memories/MEMORY_ID.png"
-QR_B64       = "<qr_code value from /api/ingest or /api/store response>"  # the data:image/png;base64,... string
 
-# decode QR
-qr_data = QR_B64.replace("data:image/png;base64,", "")
-qr_img  = Image.open(BytesIO(base64.b64decode(qr_data))).convert("RGBA")
+# fetch QR directly — no base64 wrangling needed
+qr_bytes = urllib.request.urlopen(f"https://m.cuer.ai/q/{SHORT_ID}/qr").read()
+qr_img   = Image.open(BytesIO(qr_bytes)).convert("RGBA")
 
 base = Image.open(BASE_IMAGE).convert("RGBA")
 W, H = base.size
