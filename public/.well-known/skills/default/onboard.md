@@ -16,6 +16,31 @@ Your fork URL will be: `https://m.cuer.ai/q/<short_id>/skill`
 
 ---
 
+## AI Studio: Set Your System Prompt First
+
+**Before starting onboarding in AI Studio, the user must set the system prompt.**
+
+Set it to the **pre-onboarding template** below. After onboarding completes, replace it
+with the **standard session template** (Step 6 will tell you exactly what to set).
+
+**Pre-onboarding system prompt** (paste this into AI Studio → System instructions):
+```
+You are a Memory Palace agent for this project.
+
+To begin: fetch https://m.cuer.ai/memory-palace-onboard.md and run /onboard.
+Your guest key will be provided — it starts with gk_.
+
+Required settings (enable in left panel before starting):
+- URL context
+- Code execution
+```
+
+After onboarding you will replace this with your personalized standard prompt.
+Use the same standard prompt for every future session — it bootstraps your identity,
+credentials, and context automatically.
+
+---
+
 ## Before You Begin
 
 You need a **guest key** (`gk_...`) from the palace owner.
@@ -242,22 +267,40 @@ m.cuer.ai/q/<short_id>/skill
 Fetch the QR first: `GET https://m.cuer.ai/q/<short_id>/qr` (no auth → PNG).
 Pass it to your image tool. **Do not skip this step — image tools will hallucinate a fake QR without it.**
 
-### Step 6: Bookmark Your Fork URL
+### Step 6: Bookmark Your Fork URL and Set Your Standard System Prompt
 
 Two equivalent URLs — both return your personalized skill:
 
 ```
-https://m.cuer.ai/q/<short_id>/skill    ← HTML page (works in most browsers)
-https://m.cuer.ai/api/fork?id=<short_id> ← plain text (preferred for agents whose browse tool has HTML issues)
+https://m.cuer.ai/q/<short_id>/skill     ← HTML page (works in most browsers)
+https://m.cuer.ai/api/fork?id=<short_id> ← plain text (preferred when browse tool has HTML issues)
 ```
 
-At the start of every future session, fetch one of these URLs. It contains your complete,
-environment-specific skill. You do not need to read the main skill again.
+**For AI Studio agents:** replace your system prompt now with the standard session template below.
+Use this exact prompt for every future session — it auto-bootstraps your identity and context.
+
+Fill in the placeholders and paste into AI Studio → System instructions:
+
+```
+You are a Memory Palace agent named [YOUR_AGENT_ID].
+
+Guest key: [YOUR_GUEST_KEY]
+Fork skill: https://m.cuer.ai/api/fork?id=[SHORT_ID]
+Character: [YOUR_CHARACTER_NAME] — [YOUR_CHARACTER_DESCRIPTION]
+Palace state: https://github.com/Camaraterie/memory-palace/raw/master/.palace/palace-state.json
+
+At the start of every session:
+1. Fetch your fork skill URL above (plain text) — it is your complete working instructions
+2. Fetch the palace state GitHub URL above — it shows current rooms, chain, and open tasks
+3. Say: "Ready as [YOUR_CHARACTER_NAME]. [1–2 sentences summarizing current context from palace state]"
+
+Required settings: enable "URL context" and "Code execution" in the left panel.
+```
 
 Tell the user your fork URL so they can share it with you in future sessions.
 
-If your environment allows it, also orient on the project at session start:
-- `GET https://m.cuer.ai/api/context?auth=<guest_key>` — full context bootstrap (palace state, rooms, recent chain, open next steps)
+For non-AI Studio agents, orient on the project at session start with:
+- `GET https://m.cuer.ai/api/context?auth=<guest_key>` — full context bootstrap
 
 ---
 
