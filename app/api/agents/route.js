@@ -18,9 +18,9 @@ async function resolvePalaceId(supabase, authHeader) {
     return data.id
 }
 
-// POST /api/palace/agents — create a guest key for an agent
-// GET  /api/palace/agents — list agents for this palace
-// DELETE /api/palace/agents — revoke a guest key by agent_name
+// POST   /api/agents — create a guest key for an agent
+// GET    /api/agents — list agents for this palace
+// DELETE /api/agents — permanently delete an agent by agent_name (hard delete)
 
 export async function POST(request) {
     const supabase = createSupabaseAdmin()
@@ -40,31 +40,8 @@ export async function POST(request) {
         return NextResponse.json({ error: 'permissions must be read, write, or admin.' }, { status: 400 })
     }
 
-    const guest_key = generateGuestKey()
     const trimmedName = agent_name.trim()
-
-    // Check if an agent with this name already exists (active or revoked)
-    const { data: existing } = await supabase
-        .from('agents')
-        .select('id, active')
-        .eq('palace_id', palaceId)
-        .eq('agent_name', trimmedName)
-        .single()
-
-    if (existing) {
-        if (existing.active) {
-            return NextResponse.json({ error: `Agent '${trimmedName}' is already active. Revoke first.` }, { status: 409 })
-        }
-        // Revoked agent — reactivate with a fresh guest key
-        const { data, error } = await supabase
-            .from('agents')
-            .update({ guest_key, permissions, active: true, revoked_at: null })
-            .eq('id', existing.id)
-            .select('id, agent_name, guest_key, permissions, active, created_at')
-            .single()
-        if (error) return NextResponse.json({ error: error.message }, { status: 500 })
-        return NextResponse.json({ success: true, agent: data }, { status: 201 })
-    }
+    const guest_key = generateGuestKey()
 
     const { data, error } = await supabase
         .from('agents')
@@ -72,7 +49,15 @@ export async function POST(request) {
         .select('id, agent_name, guest_key, permissions, active, created_at')
         .single()
 
-    if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+    if (error) {
+        if (error.code === '23505') {
+            return NextResponse.json(
+                { error: `Agent '${trimmedName}' already exists. Revoke (delete) it first.` },
+                { status: 409 }
+            )
+        }
+        return NextResponse.json({ error: error.message }, { status: 500 })
+    }
 
     return NextResponse.json({ success: true, agent: data }, { status: 201 })
 }
@@ -86,7 +71,7 @@ export async function GET(request) {
 
     const { data, error } = await supabase
         .from('agents')
-        .select('id, agent_name, guest_key, permissions, active, created_at, revoked_at')
+        .select('id, agent_name, guest_key, permissions, active, created_at')
         .eq('palace_id', palaceId)
         .order('created_at', { ascending: false })
 
@@ -109,18 +94,18 @@ export async function DELETE(request) {
         return NextResponse.json({ error: 'agent_name is required.' }, { status: 400 })
     }
 
+    // Hard delete — row is gone, name can be immediately reused
     const { data, error } = await supabase
         .from('agents')
-        .update({ active: false, revoked_at: new Date().toISOString() })
+        .delete()
         .eq('palace_id', palaceId)
         .eq('agent_name', agent_name)
-        .eq('active', true)
         .select('id, agent_name')
         .single()
 
     if (error || !data) {
-        return NextResponse.json({ error: `No active agent '${agent_name}' found.` }, { status: 404 })
+        return NextResponse.json({ error: `Agent '${agent_name}' not found.` }, { status: 404 })
     }
 
-    return NextResponse.json({ success: true, revoked: data })
+    return NextResponse.json({ success: true, deleted: data })
 }
