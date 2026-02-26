@@ -151,7 +151,8 @@ const server = http.createServer((req, res) => {
                 else if (pathname === '/sync-state') {
                     // Fetch live palace context, strip ALL credentials, write sanitized
                     // data to .palace/palace-state.json, commit and push.
-                    // AI Studio reads this file via GitHub raw URL — no credentials ever in git.
+                    // Optionally fetch fork skill and write to agent folder.
+                    // AI Studio reads both files via GitHub raw URL — no credentials in git.
                     const config = loadConfig();
                     const result = await apiRequest('GET', '/api/context?limit=20', null, config.palace_id);
                     if (result.status >= 400) throw new Error(`Context fetch failed (${result.status})`);
@@ -183,6 +184,21 @@ const server = http.createServer((req, res) => {
 
                     fs.writeFileSync(stateFile, JSON.stringify(state, null, 2));
                     execFileSync('git', ['add', '.palace/palace-state.json'], { cwd: REPO_ROOT });
+
+                    // If fork_id provided, fetch the fork skill and write to agent folder
+                    // so AI Studio can read it via GitHub raw URL without hitting m.cuer.ai
+                    if (query.fork_id) {
+                        const forkId = query.fork_id;
+                        if (!/^[a-z0-9]+$/i.test(forkId)) throw new Error('Invalid fork_id');
+                        const forkResult = await apiRequest('GET', `/api/fork?id=${forkId}`, null, config.palace_id);
+                        if (forkResult.status === 200 && typeof forkResult.body === 'string') {
+                            const forkFile = path.join(REPO_ROOT, '.palace', 'agents', 'gemini-ai-studio', 'fork-skill.md');
+                            fs.writeFileSync(forkFile, forkResult.body);
+                            execFileSync('git', ['add', forkFile], { cwd: REPO_ROOT });
+                            log(`📄 Fork skill written for ${forkId}`);
+                        }
+                    }
+
                     try {
                         execFileSync('git', ['commit', '-m', 'bridge: sync palace state'], { cwd: REPO_ROOT });
                     } catch (e) {
