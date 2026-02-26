@@ -1,11 +1,14 @@
 const http = require('http');
+const https = require('https');
 const fs = require('fs');
 const path = require('path');
-const { execSync, execFileSync } = require('child_process');
+const os = require('os');
+const { execFileSync } = require('child_process');
 
 const REPO_ROOT = __dirname;
 const PORT = 3005;
-const PUSH_REMOTE = 'origin';
+const API_BASE = 'https://m.cuer.ai';
+const CONFIG_FILE = path.join(os.homedir(), '.memorypalace', 'config.json');
 
 // 1x1 transparent PNG for browser feedback
 const TRANSPARENT_PNG = Buffer.from(
@@ -15,12 +18,45 @@ const TRANSPARENT_PNG = Buffer.from(
 
 function log(msg) {
     const ts = new Date().toISOString().split('T')[1].split('.')[0];
-    console.log(`[${ts}] [SPECTRA] ${msg}`);
+    console.log(`[${ts}] [BRIDGE] ${msg}`);
 }
 
 function safePath(p) {
     if (!p) throw new Error('Missing file path');
     return path.normalize(p).replace(/^(\.\.(\/|\\|$))+/, '');
+}
+
+function loadConfig() {
+    if (!fs.existsSync(CONFIG_FILE)) throw new Error(`Config not found at ${CONFIG_FILE}. Run \`mempalace init\`.`);
+    return JSON.parse(fs.readFileSync(CONFIG_FILE, 'utf8'));
+}
+
+function apiRequest(method, urlPath, body, authToken) {
+    return new Promise((resolve, reject) => {
+        const url = new URL(API_BASE + urlPath);
+        const reqBody = body ? JSON.stringify(body) : null;
+        const options = {
+            hostname: url.hostname,
+            path: url.pathname + url.search,
+            method,
+            headers: {
+                'Authorization': `Bearer ${authToken}`,
+                'Content-Type': 'application/json',
+                ...(reqBody ? { 'Content-Length': Buffer.byteLength(reqBody) } : {}),
+            },
+        };
+        const req = https.request(options, (res) => {
+            let data = '';
+            res.on('data', chunk => data += chunk);
+            res.on('end', () => {
+                try { resolve({ status: res.statusCode, body: JSON.parse(data) }); }
+                catch { resolve({ status: res.statusCode, body: data }); }
+            });
+        });
+        req.on('error', reject);
+        if (reqBody) req.write(reqBody);
+        req.end();
+    });
 }
 
 const server = http.createServer((req, res) => {
@@ -47,104 +83,131 @@ const server = http.createServer((req, res) => {
     };
 
     if (req.method === 'GET') {
-        try {
-            if (pathname === '/read') {
-                const file = safePath(query.file);
-                const fullPath = path.join(REPO_ROOT, file);
-                if (fs.existsSync(fullPath)) {
-                    sendText(fs.readFileSync(fullPath, 'utf8'));
-                } else {
+        (async () => {
+            try {
+                if (pathname === '/read') {
+                    const file = safePath(query.file);
+                    const fullPath = path.join(REPO_ROOT, file);
+                    if (fs.existsSync(fullPath)) {
+                        sendText(fs.readFileSync(fullPath, 'utf8'));
+                    } else {
+                        res.writeHead(404);
+                        res.end(`File not found: ${file}`);
+                    }
+                }
+                else if (pathname === '/status') {
+                    const status = execFileSync('git', ['status', '--porcelain'], { cwd: REPO_ROOT }).toString();
+                    log('Checked git status');
+                    sendText(status || 'Clean working tree');
+                }
+                else if (pathname === '/patch') {
+                    const file = safePath(query.file);
+                    if (!query.data) throw new Error('Missing diff data');
+                    const diff = Buffer.from(query.data, 'base64').toString('utf8');
+                    const patchFile = path.join(REPO_ROOT, 'cuer_temp.patch');
+                    fs.writeFileSync(patchFile, diff);
+                    try {
+                        execFileSync('patch', ['-u', file, '-i', 'cuer_temp.patch'], { cwd: REPO_ROOT });
+                        log(`💠 Patched: ${file}`);
+                    } finally {
+                        if (fs.existsSync(patchFile)) fs.unlinkSync(patchFile);
+                    }
+                    sendImg();
+                }
+                else if (pathname === '/stage') {
+                    const file = safePath(query.file);
+                    execFileSync('git', ['add', file], { cwd: REPO_ROOT });
+                    log(`🔹 Staged: ${file}`);
+                    sendImg();
+                }
+                else if (pathname === '/commit') {
+                    const msg = query.message || 'bridge: automated update';
+                    try {
+                        execFileSync('git', ['commit', '-m', msg], { cwd: REPO_ROOT });
+                        log(`✅ Committed: "${msg}"`);
+                    } catch (e) {
+                        if (!e.message.includes('nothing to commit')) throw e;
+                    }
+                    sendImg();
+                }
+                else if (pathname === '/push') {
+                    log('🚀 Pushing...');
+                    execFileSync('git', ['push', 'origin', 'HEAD'], { cwd: REPO_ROOT });
+                    log('☁️ Push complete.');
+                    sendImg();
+                }
+                else if (pathname === '/proxy-store') {
+                    // AI Studio sends base64-encoded memory payload (no auth).
+                    // Bridge adds palace_id from local config and proxies to /api/store.
+                    // Credentials never touch git or AI Studio's context.
+                    if (!query.json) throw new Error('Missing json param');
+                    const payload = JSON.parse(Buffer.from(query.json, 'base64').toString('utf8'));
+                    const config = loadConfig();
+                    const result = await apiRequest('POST', '/api/store', payload, config.palace_id);
+                    if (result.status >= 400) throw new Error(`Store failed (${result.status}): ${JSON.stringify(result.body)}`);
+                    log(`💾 Stored: ${result.body?.short_id || '?'}`);
+                    sendImg();
+                }
+                else if (pathname === '/sync-state') {
+                    // Fetch live palace context, strip ALL credentials, write sanitized
+                    // data to .palace/palace-state.json, commit and push.
+                    // AI Studio reads this file via GitHub raw URL — no credentials ever in git.
+                    const config = loadConfig();
+                    const result = await apiRequest('GET', '/api/context?limit=20', null, config.palace_id);
+                    if (result.status >= 400) throw new Error(`Context fetch failed (${result.status})`);
+                    const ctx = result.body;
+
+                    const stateFile = path.join(REPO_ROOT, '.palace', 'palace-state.json');
+                    let state = {};
+                    try { state = JSON.parse(fs.readFileSync(stateFile, 'utf8')); } catch {}
+
+                    // Merge live data — no palace.id, no guest keys, no auth-bearing URLs
+                    state.rooms = ctx.rooms || state.rooms || {};
+                    state.open_next_steps = ctx.open_next_steps || [];
+                    state.repo = ctx.repo || state.repo || null;
+                    state.agents_roster = (ctx.agents || []).map(a => ({
+                        name: a.name,
+                        permissions: a.permissions,
+                        joined: a.joined,
+                    }));
+                    state.live_chain = (ctx.chain || []).map(m => ({
+                        short_id: m.short_id,
+                        agent: m.agent,
+                        summary: m.summary,
+                        outcome: m.outcome,
+                        room: m.room,
+                        created_at: m.created_at,
+                        capsule_url: m.capsule_url,
+                    }));
+                    state.synced_at = new Date().toISOString();
+
+                    fs.writeFileSync(stateFile, JSON.stringify(state, null, 2));
+                    execFileSync('git', ['add', '.palace/palace-state.json'], { cwd: REPO_ROOT });
+                    try {
+                        execFileSync('git', ['commit', '-m', 'bridge: sync palace state'], { cwd: REPO_ROOT });
+                    } catch (e) {
+                        if (!e.message.includes('nothing to commit')) throw e;
+                    }
+                    execFileSync('git', ['push', 'origin', 'HEAD'], { cwd: REPO_ROOT });
+                    log('🔄 Palace state synced to GitHub (no credentials).');
+                    sendImg();
+                }
+                else {
                     res.writeHead(404);
-                    res.end(`File not found: ${file}`);
+                    res.end('Unknown endpoint');
                 }
+            } catch (e) {
+                sendError(e);
             }
-            else if (pathname === '/status') {
-                const status = execSync('git status --porcelain', { cwd: REPO_ROOT }).toString();
-                log('Checked git status');
-                sendText(status || 'Clean working tree');
-            }
-            else if (pathname === '/patch') {
-                const file = safePath(query.file);
-                if (!query.data) throw new Error('Missing diff data');
-                const diff = Buffer.from(query.data, 'base64').toString('utf8');
-                const patchFile = path.join(REPO_ROOT, 'cuer_temp.patch');
-                fs.writeFileSync(patchFile, diff);
-                try {
-                    execFileSync('patch', ['-u', file, '-i', 'cuer_temp.patch'], { cwd: REPO_ROOT });
-                    log(`💠 Patched: ${file}`);
-                } finally {
-                    if (fs.existsSync(patchFile)) fs.unlinkSync(patchFile);
-                }
-                sendImg();
-            }
-            else if (pathname === '/stage') {
-                const file = safePath(query.file);
-                execFileSync('git', ['add', file], { cwd: REPO_ROOT });
-                log(`🔹 Staged: ${file}`);
-                sendImg();
-            }
-            else if (pathname === '/commit') {
-                const msg = query.message || 'SPECTRA: Automated update';
-                try {
-                    execFileSync('git', ['commit', '-m', msg], { cwd: REPO_ROOT });
-                    log(`✅ Committed: "${msg}"`);
-                } catch (e) {
-                    if (!e.message.includes('nothing to commit')) throw e;
-                }
-                sendImg();
-            }
-            else if (pathname === '/push') {
-                const remote = query.remote || PUSH_REMOTE;
-                log(`🚀 Pushing to ${remote}...`);
-                execFileSync('git', ['push', remote, 'HEAD'], { cwd: REPO_ROOT });
-                log('☁️ Push complete.');
-                sendImg();
-            }
-            else if (pathname === '/reflect') {
-                // Read a local file, write to REFLECTOR.txt, push to GitHub for AI Studio to read
-                const file = safePath(query.file);
-                const content = fs.readFileSync(path.join(REPO_ROOT, file), 'utf8');
-                fs.writeFileSync(path.join(REPO_ROOT, 'REFLECTOR.txt'), `// SPECTRA REFLECTION OF ${file}\n\n${content}`);
-                execFileSync('git', ['add', 'REFLECTOR.txt'], { cwd: REPO_ROOT });
-                try {
-                    execFileSync('git', ['commit', '-m', `SPECTRA: Reflecting ${file}`], { cwd: REPO_ROOT });
-                } catch (e) {
-                    if (!e.message.includes('nothing to commit')) throw e;
-                }
-                execFileSync('git', ['push', PUSH_REMOTE, 'HEAD'], { cwd: REPO_ROOT });
-                log(`📡 Reflected ${file} to GitHub.`);
-                sendImg();
-            }
-            else if (pathname === '/capsule-reflect') {
-                // Fetch a m.cuer.ai capsule via local curl, push to REFLECTOR.txt for AI Studio to read
-                const id = query.id;
-                if (!id || !/^[a-z0-9]+$/i.test(id)) throw new Error('Invalid capsule id');
-                const capsuleUrl = `https://m.cuer.ai/q/${id}`;
-                log(`📡 Fetching capsule ${id}...`);
-                execFileSync('curl', ['-s', capsuleUrl, '-o', 'REFLECTOR.txt'], { cwd: REPO_ROOT });
-                execFileSync('git', ['add', 'REFLECTOR.txt'], { cwd: REPO_ROOT });
-                try {
-                    execFileSync('git', ['commit', '-m', `SPECTRA: Reflecting capsule ${id}`], { cwd: REPO_ROOT });
-                } catch (e) {
-                    if (!e.message.includes('nothing to commit')) throw e;
-                }
-                execFileSync('git', ['push', PUSH_REMOTE, 'HEAD'], { cwd: REPO_ROOT });
-                log(`☁️ Capsule ${id} reflected to GitHub.`);
-                sendImg();
-            }
-            else {
-                res.writeHead(404);
-                res.end('Unknown endpoint');
-            }
-        } catch (e) {
-            sendError(e);
-        }
+        })();
     }
 });
 
 server.listen(PORT, '127.0.0.1', () => {
-    console.log(`\n❖ OPTICAL DAEMON v5 ONLINE ❖`);
+    console.log(`\n❖ BRIDGE v6 ONLINE ❖`);
     console.log(`Listening on http://127.0.0.1:${PORT}`);
-    console.log(`Push remote: ${PUSH_REMOTE}`);
-    console.log(`Endpoints: /read, /status, /patch, /stage, /commit, /push, /reflect, /capsule-reflect`);
+    console.log(`Config: ${CONFIG_FILE}`);
+    console.log(`Endpoints: /read /status /patch /stage /commit /push /proxy-store /sync-state`);
+    console.log(`\nNote: /reflect and /capsule-reflect removed.`);
+    console.log(`Credentials are loaded from local config and NEVER written to git.`);
 });

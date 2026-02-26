@@ -12,3 +12,6 @@ setup_storage.js
 generate-qr.py
 migration.sql
 packages/cli/dist/
+REFLECTOR.txt
+cuer_temp.patch
+codebase_small.txt
