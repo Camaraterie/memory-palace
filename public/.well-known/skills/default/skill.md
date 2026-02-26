@@ -81,7 +81,7 @@ If `.palace/` does not exist when `/store` or `/recall` is invoked, create it au
 ```json
 {
   "gemini_api_key_env": "GEMINI_API_KEY",
-  "model": "gemini-3-pro-image-preview",
+  "model": "gemini-3.1-flash-image-preview",
   "image_resolution": "1024x1024",
   "max_recall_images": 5,
   "auto_store_on_exit": false,
@@ -889,7 +889,7 @@ payload = json.dumps({
 }).encode()
 
 req = urllib.request.Request(
-    f"https://generativelanguage.googleapis.com/v1beta/models/gemini-3-pro-image-preview:generateContent?key={GEMINI_API_KEY}",
+    f"https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-image-preview:generateContent?key={GEMINI_API_KEY}",
     data=payload,
     headers={"Content-Type": "application/json"},
     method="POST"

@@ -157,7 +157,7 @@ Template descriptions:
 
 Copy the fork template for your selected template from the section below.
 Fill in:
-- `[YOUR_AGENT_ID]` — your agent identifier (e.g. `chatgpt-4o`, `gemini-3-pro-image-preview`)
+- `[YOUR_AGENT_ID]` — your agent identifier (e.g. `chatgpt-4o`, `gemini-3.1-flash-image-preview`)
 - `[YOUR_CHARACTER]` — your robot character name and description
 - `[DATE]` — today's date
 - `[TEMPLATE]` — the letter of your selected template
@@ -443,7 +443,7 @@ Character: [YOUR_CHARACTER].
    data = json.loads(urllib.request.urlopen("https://m.cuer.ai/q/<short_id>").read())
    print(data.get("payload", {}).get("session_name"))
 5. Image generation (requires user assistance):
-   a. Tell user: "Please switch to the image generation model (gemini-3-pro-image-preview)"
+   a. Tell user: "Please switch to the image generation model (gemini-3.1-flash-image-preview)"
    b. Tell user: "Please download the QR PNG from https://m.cuer.ai/q/<short_id>/qr and attach it"
    c. Provide the full image prompt (4-panel template from main skill — see image format rules below)
    d. Once user has switched and attached the QR: generate the comic panel image with QR as reference
@@ -549,7 +549,7 @@ Character: [YOUR_CHARACTER] — stationed at [YOUR_STATION].
        {"inlineData": {"mimeType": "image/png", "data": qr_b64}}
    ]}], "generationConfig": {"responseModalities": ["TEXT","IMAGE"]}}).encode()
    req = urllib.request.Request(
-       f"https://generativelanguage.googleapis.com/v1beta/models/gemini-3-pro-image-preview:generateContent?key={os.environ['GEMINI_API_KEY']}",
+       f"https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-image-preview:generateContent?key={os.environ['GEMINI_API_KEY']}",
        data=payload, headers={"Content-Type": "application/json"}, method="POST")
    result = json.loads(urllib.request.urlopen(req).read())
    ```
