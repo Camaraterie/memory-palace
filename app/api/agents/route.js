@@ -41,24 +41,38 @@ export async function POST(request) {
     }
 
     const guest_key = generateGuestKey()
+    const trimmedName = agent_name.trim()
+
+    // Check if an agent with this name already exists (active or revoked)
+    const { data: existing } = await supabase
+        .from('agents')
+        .select('id, active')
+        .eq('palace_id', palaceId)
+        .eq('agent_name', trimmedName)
+        .single()
+
+    if (existing) {
+        if (existing.active) {
+            return NextResponse.json({ error: `Agent '${trimmedName}' is already active. Revoke first.` }, { status: 409 })
+        }
+        // Revoked agent — reactivate with a fresh guest key
+        const { data, error } = await supabase
+            .from('agents')
+            .update({ guest_key, permissions, active: true, revoked_at: null })
+            .eq('id', existing.id)
+            .select('id, agent_name, guest_key, permissions, active, created_at')
+            .single()
+        if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+        return NextResponse.json({ success: true, agent: data }, { status: 201 })
+    }
 
     const { data, error } = await supabase
         .from('agents')
-        .insert([{
-            palace_id: palaceId,
-            agent_name: agent_name.trim(),
-            guest_key,
-            permissions,
-        }])
+        .insert([{ palace_id: palaceId, agent_name: trimmedName, guest_key, permissions }])
         .select('id, agent_name, guest_key, permissions, active, created_at')
         .single()
 
-    if (error) {
-        if (error.code === '23505') {
-            return NextResponse.json({ error: `Agent '${agent_name}' already exists. Revoke first or use a different name.` }, { status: 409 })
-        }
-        return NextResponse.json({ error: error.message }, { status: 500 })
-    }
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 })
 
     return NextResponse.json({ success: true, agent: data }, { status: 201 })
 }
