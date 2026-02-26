@@ -2,17 +2,13 @@
 
 ## Git — Commit & Push at Each Milestone
 
-Two remotes are maintained in parallel:
+Single canonical remote: `origin` → `github.com/Camaraterie/memory-palace`
 
-| Remote | Repo | Auth |
-|--------|------|------|
-| `cuer-bot` | `github.com/cuer-bot/memory-palace` | cuer-bot token (available in shell) |
-| `origin` | `github.com/Camaraterie/memory-palace` | Camaraterie token (push manually if 403) |
+cuer-bot is a collaborator and pushes directly as cuer-bot.
 
 **Standard milestone push:**
 ```bash
-git push cuer-bot master
-gh auth switch --user Camaraterie && git push origin master && gh auth switch --user cuer-bot
+git push origin master
 ```
 
 ## Skill Doc — Keep in Sync
