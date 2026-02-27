@@ -435,15 +435,21 @@ These are two separate things — do not write JSON into `.palace/prompts/`.
    }
    EOF
    ```
-4. Store: `mempalace save /tmp/mem-[NAME]-payload.json`
-   Note the short_id printed.
-5. Fetch QR: `curl -s "https://m.cuer.ai/q/<short_id>/qr" -o .palace/qr-temp.png`
-6. Generate image: pass the prompt from `.palace/prompts/mem-[NAME].txt` AND `.palace/qr-temp.png`
-   to your image tool as a reference image.
-   If no image tool available: skip — the prompt file is the lossless record.
-7. Attach image if generated: `mempalace attach <short_id> <path-to-image.png>`
-8. Scan-verify: `curl -X POST https://m.cuer.ai/api/scan/verify -F "image=@.palace/memories/mem-[NAME].png"`
-9. Commit: `git add .palace/prompts/mem-[NAME].txt .palace/palace-state.json && git commit -m "mem-[NAME]: ..." && git push origin master`
+4. Store memory and generate image in one command:
+   ```bash
+   mempalace store .palace/prompts/mem-[NAME].txt /tmp/mem-[NAME]-payload.json
+   ```
+   This encrypts and stores the payload, calls `gemini-3.1-flash-image-preview` with
+   your prompt and the QR code as a reference image, saves the result to
+   `.palace/memories/<short_id>.png`, and uploads to Supabase. No manual steps needed.
+
+   Or run separately if you need the short_id between steps:
+   ```bash
+   mempalace save /tmp/mem-[NAME]-payload.json        # prints short_id
+   mempalace generate .palace/prompts/mem-[NAME].txt <short_id>
+   ```
+5. Scan-verify: `curl -X POST https://m.cuer.ai/api/scan/verify -F "image=@.palace/memories/<short_id>.png"`
+6. Commit: `git add .palace/prompts/mem-[NAME].txt .palace/palace-state.json .palace/memories/<short_id>.png && git commit -m "mem-[NAME]: ..." && git push origin master`
 
 ## /recall
 ```bash

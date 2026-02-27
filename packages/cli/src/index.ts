@@ -8,6 +8,8 @@ import { authCommand } from './auth';
 import { inviteAgent, revokeAgent, listAgents } from './agents';
 import { shareMemory } from './share';
 import { attachImage } from './attach';
+import { generateCommand } from './generate';
+import { storeCommand } from './store-command';
 
 const program = new Command();
 
@@ -104,6 +106,20 @@ program
     .description('Attach a generated image to a stored memory (copies to .palace/memories/ and uploads)')
     .action(async (short_id, image_path) => {
         await attachImage(short_id, image_path);
+    });
+
+program
+    .command('generate <prompt_file> <short_id>')
+    .description('Generate a memory image via Gemini API and upload to Supabase')
+    .action(async (prompt_file, short_id) => {
+        await generateCommand(prompt_file, short_id);
+    });
+
+program
+    .command('store <prompt_file> <payload_json>')
+    .description('Save memory + generate image in one shot (prompt_file: .txt, payload_json: JSON)')
+    .action(async (prompt_file, payload_json) => {
+        await storeCommand(prompt_file, payload_json);
     });
 
 program
