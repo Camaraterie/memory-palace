@@ -16,7 +16,7 @@ const program = new Command();
 program
     .name('memory-palace')
     .description('Memory Palace CLI for agents')
-    .version('1.1.0');
+    .version('2.0.0');
 
 program
     .command('init')
