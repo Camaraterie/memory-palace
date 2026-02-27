@@ -61,6 +61,9 @@ export default function Home() {
           <button className="btn-primary" onClick={copySkill}>
             {copied ? '✓ Copied to clipboard' : '⬇ Copy the Skill File'}
           </button>
+          <a href="/docs" className="btn-secondary">
+            Docs →
+          </a>
           <a href="#architecture" className="btn-secondary">
             How it works →
           </a>
@@ -367,6 +370,8 @@ export default function Home() {
           <a href="https://cuer.ai">CueR.ai</a> is the infrastructure that makes it lossless.
           &nbsp;·&nbsp;
           <a href={SKILL_URL}>Raw skill file</a>
+          &nbsp;·&nbsp;
+          <a href="/docs">Documentation</a>
           &nbsp;·&nbsp;
           <a href="https://github.com" target="_blank" rel="noopener">GitHub</a>
         </p>
