@@ -1,0 +1,9 @@
+Guest key for ai-studio-build agent:
+
+  gk_de6e1de8de0316aec2e37ae9c907aee6
+
+Permissions: read
+Revoke with: mempalace revoke ai-studio-build
+
+Context URL (fetch before building):
+  https://m.cuer.ai/api/context?auth=gk_de6e1de8de0316aec2e37ae9c907aee6
