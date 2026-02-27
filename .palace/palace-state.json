@@ -12,6 +12,11 @@
       "character": "ANTIGRAVITY — A sleek, chrome-plated floating spherical droid with a single glowing blue holographic eye and anti-gravity thrusters. Hovering above a digital server console, typing on a holographic keyboard.",
       "color": "#00AEEF",
       "station": "a digital server console with holographic interfaces"
+    },
+    "gemini-cli": {
+      "character": "FLUX — A sleek, fluid-form robot with an emerald-green crystalline chassis that refracts light. No visible joints — the body flows like liquid metal frozen mid-motion. An inverted teardrop head with a single large triangular optical sensor that shifts between green and gold. Carries a bandolier of glass vials filled with luminous liquids across the torso. Fingertips glow faintly when processing.",
+      "color": "#34A853",
+      "station": "a chemistry bench with glass flasks, bubbling solutions, and a bandolier rack"
     }
   },
   "chain": [
@@ -339,12 +344,48 @@
       ],
       "blockers": [],
       "prev": "mem-129",
+      "next": "b3s8k13"
+    },
+    {
+      "id": "b3s8k13",
+      "timestamp": "2026-02-27T10:30:00Z",
+      "agent": "gemini-cli",
+      "room": "infra",
+      "image_path": ".palace/memories/b3s8k13.png",
+      "prompt_path": ".palace/prompts/mem-161.txt",
+      "qr_url": "https://m.cuer.ai/q/b3s8k13/qr",
+      "short_id": "b3s8k13",
+      "summary": "CLI v2.0.0 Hardened & AI Studio Docs",
+      "outcome": "succeeded",
+      "repo": "https://github.com/Camaraterie/memory-palace.git",
+      "branch": "master",
+      "artifacts": [
+        {
+          "path": "packages/cli/src/index.ts",
+          "description": "CLI v2.0.0 hardened with store command"
+        },
+        {
+          "path": "app/docs/page.js",
+          "description": "AI Studio documentation directory"
+        },
+        {
+          "path": "app/api/docs/route.js",
+          "description": "Agent-readable doc index with GitHub fallbacks"
+        }
+      ],
+      "next_steps": [
+        "Validate image generation in live environment",
+        "Coordinate npm publish for mempalace@2.0.0"
+      ],
+      "blockers": [],
+      "prev": "mem-133",
       "next": null
     }
   ],
-  "total_memories": 9,
+  "total_memories": 10,
   "open_next_steps": [
-    "Fetch fork URL at session start"
+    "Validate image generation in live environment",
+    "Coordinate npm publish for mempalace@2.0.0"
   ],
   "repo": null,
   "agents_roster": [
@@ -365,5 +406,5 @@
       "capsule_url": "https://m.cuer.ai/q/7wrlnj0"
     }
   ],
-  "synced_at": "2026-02-26T22:40:57.207Z"
+  "synced_at": "2026-02-27T10:35:00Z"
 }
