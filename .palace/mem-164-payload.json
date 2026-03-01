@@ -1,0 +1,44 @@
+{
+  "session_name": "mem-164",
+  "agent": "claude-sonnet-4-6",
+  "status": "Unified typography to sans-serif across all pages. Replaced Cormorant Garamond with DM Sans for display headings. Bumped font-weights 300-400 to 500-600. Aligned Docs page header/footer with FAQ/Troubleshoot pattern.",
+  "outcome": "succeeded",
+  "built": [
+    "Unified --font-display CSS variable to DM Sans",
+    "Bumped heading font-weights for sans-serif hierarchy",
+    "Aligned Docs page layout with FAQ/Troubleshoot pattern"
+  ],
+  "decisions": [
+    "Changed --font-display from Cormorant Garamond to DM Sans",
+    "Bumped heading weights: 300→600 for titles, 300→500 for CTA/pricing",
+    "Kept 300 weight for decorative numerals (step numbers, tier numbers)",
+    "Used var(--font-display) in Header instead of literal font-family",
+    "Matched Docs maxWidth to 760px like FAQ/Troubleshoot"
+  ],
+  "next_steps": [
+    "Visual QA across all page routes",
+    "Verify no serif remnants in browser DevTools"
+  ],
+  "files": [
+    "app/globals.css",
+    "app/layout.js",
+    "src/components/Header.tsx",
+    "src/components/LandingPage.tsx",
+    "app/skill/SkillClient.js",
+    "app/docs/DocsClient.js",
+    "app/faq/FaqClient.js",
+    "app/troubleshoot/TroubleshootClient.js"
+  ],
+  "blockers": [],
+  "conversation_context": "Unified site typography from mixed serif/sans-serif to pure sans-serif. The site was using Cormorant Garamond (serif) for --font-display headings, DM Sans for body, and JetBrains Mono for code. Changed --font-display to DM Sans so all headings use sans-serif. Bumped font-weights since sans-serif at 300-400 looks too thin for headings. Removed Cormorant from Google Fonts URL. Fixed Header.tsx literal serif reference. Aligned Docs page header/footer with FAQ/Troubleshoot pages (maxWidth 760, m.cuer.ai back link, cross-link footer). Committed as mem-164 on frontend-v2 branch.",
+  "roster": [
+    { "agent": "FORGE", "role": "Typography unification and layout alignment" }
+  ],
+  "metadata": {
+    "commit": "e77c801",
+    "branch": "frontend-v2",
+    "ticket": "mem-164"
+  },
+  "repo": "https://github.com/Camaraterie/memory-palace.git",
+  "branch": "frontend-v2"
+}

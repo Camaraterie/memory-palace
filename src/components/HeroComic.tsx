@@ -1,38 +1,46 @@
 'use client'
 
-import { useState, useRef } from 'react'
+import { useState, useRef, useCallback } from 'react'
 
 export default function HeroComic() {
-  const [transform, setTransform] = useState('perspective(1000px) rotateX(0deg) rotateY(0deg) scale3d(1, 1, 1)')
   const [isEnlarged, setIsEnlarged] = useState(false)
   const [copiedImage, setCopiedImage] = useState(false)
   const containerRef = useRef<HTMLDivElement>(null)
 
-  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (isEnlarged) return;
-    if (!containerRef.current) return;
-    const rect = containerRef.current.getBoundingClientRect()
+  const handleMouseMove = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
+    if (isEnlarged) return
+    const el = containerRef.current
+    if (!el) return
+    const rect = el.getBoundingClientRect()
     const x = e.clientX - rect.left
     const y = e.clientY - rect.top
     const centerX = rect.width / 2
     const centerY = rect.height / 2
-    const rotateX = ((y - centerY) / centerY) * -5 
+    const rotateX = ((y - centerY) / centerY) * -5
     const rotateY = ((x - centerX) / centerX) * 5
-    setTransform(`perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) scale3d(1.02, 1.02, 1.02)`)
-  }
+    el.style.transition = 'none'
+    el.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) scale3d(1.02, 1.02, 1.02)`
+  }, [isEnlarged])
 
-  const handleMouseLeave = () => {
-    if (isEnlarged) return;
-    setTransform('perspective(1000px) rotateX(0deg) rotateY(0deg) scale3d(1, 1, 1)')
-  }
+  const handleMouseLeave = useCallback(() => {
+    if (isEnlarged) return
+    const el = containerRef.current
+    if (!el) return
+    el.style.transition = 'transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94)'
+    el.style.transform = 'perspective(1000px) rotateX(0deg) rotateY(0deg) scale3d(1, 1, 1)'
+  }, [isEnlarged])
 
   const toggleEnlarge = () => {
+    const el = containerRef.current
+    if (!el) return
     if (isEnlarged) {
       setIsEnlarged(false)
-      setTransform('perspective(1000px) rotateX(0deg) rotateY(0deg) scale3d(1, 1, 1)')
+      el.style.transition = 'transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94)'
+      el.style.transform = 'perspective(1000px) rotateX(0deg) rotateY(0deg) scale3d(1, 1, 1)'
     } else {
       setIsEnlarged(true)
-      setTransform('perspective(1000px) rotateX(0deg) rotateY(0deg) scale3d(1.5, 1.5, 1.5)')
+      el.style.transition = 'transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94)'
+      el.style.transform = 'perspective(1000px) rotateX(0deg) rotateY(0deg) scale3d(1.5, 1.5, 1.5)'
     }
   }
 
@@ -55,10 +63,10 @@ export default function HeroComic() {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1.5rem', position: 'relative', zIndex: isEnlarged ? 50 : 1 }}>
-      
+
       {/* Dim overlay when enlarged */}
       {isEnlarged && (
-        <div 
+        <div
           onClick={toggleEnlarge}
           style={{
             position: 'fixed',
@@ -71,7 +79,7 @@ export default function HeroComic() {
       )}
 
       {/* Comic Image Container */}
-      <div 
+      <div
         ref={containerRef}
         onMouseMove={handleMouseMove}
         onMouseLeave={handleMouseLeave}
@@ -80,11 +88,10 @@ export default function HeroComic() {
           width: '100%',
           maxWidth: '500px',
           cursor: isEnlarged ? 'zoom-out' : 'zoom-in',
-          transition: 'transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94)',
-          transform: transform,
+          transform: 'perspective(1000px) rotateX(0deg) rotateY(0deg) scale3d(1, 1, 1)',
           borderRadius: '12px',
-          boxShadow: isEnlarged 
-            ? '0 25px 50px -12px rgba(0, 0, 0, 1), 0 0 40px rgba(212, 160, 23, 0.2)' 
+          boxShadow: isEnlarged
+            ? '0 25px 50px -12px rgba(0, 0, 0, 1), 0 0 40px rgba(212, 160, 23, 0.2)'
             : '0 20px 25px -5px rgba(0, 0, 0, 0.5), 0 10px 10px -5px rgba(0, 0, 0, 0.3)',
           border: '1px solid rgba(184, 134, 11, 0.3)',
           background: '#1a1725',
@@ -92,19 +99,19 @@ export default function HeroComic() {
         }}
       >
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img 
-          src="/hero-comic.png" 
-          alt="Memory Palace Agent Onboarding Comic" 
+        <img
+          src="/hero-comic.png"
+          alt="Memory Palace Agent Onboarding Comic"
           style={{ width: '100%', height: 'auto', display: 'block' }}
         />
       </div>
 
       {/* Copy Action Button */}
-      <button 
+      <button
         className={copiedImage ? "stone-btn-primary stone-btn copied" : "stone-btn"}
         onClick={copyImage}
-        style={{ 
-          fontSize: '0.85rem', 
+        style={{
+          fontSize: '0.85rem',
           padding: '0.6rem 1.5rem',
           transition: 'all 0.2s',
           ...(copiedImage ? {
