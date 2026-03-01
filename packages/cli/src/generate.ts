@@ -98,7 +98,7 @@ export async function generateImage(promptFile: string, shortId: string): Promis
     }
     const imagePath = path.join(MEMORIES_DIR, `${shortId}.png`);
     const imageBuffer = Buffer.from(imgPart.inlineData.data, 'base64');
-    fs.writeFileSync(imagePath, imageBuffer);
+    fs.writeFileSync(imagePath, imageBuffer as any);
     console.log(`✓ Image saved: ${imagePath} (${imageBuffer.length} bytes)`);
 
     // 6. Upload to Supabase storage via /api/upload
