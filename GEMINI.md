@@ -26,7 +26,7 @@ Store it with:
 ```bash
 mempalace auth <your-gk_...key>
 ```
-This writes to ~/.mempalace/config.json — never to a committed file.
+This writes to ~/.memorypalace/config.json — never to a committed file.
 
 Alternatively the key may be available as $MP_GUEST_KEY in your environment.
 
