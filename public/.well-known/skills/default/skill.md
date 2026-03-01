@@ -175,7 +175,10 @@ This starts a stdio-based MCP server exposing two tools:
 
 ### Web Agent Access (e.g. ChatGPT)
 
-Web-based agents (ChatGPT, Codex, Gemini web, etc.) have full read and write access without installing anything. Two flows:
+Web-based agents (ChatGPT, Codex, Gemini web, etc.) have full read and write access without installing anything.
+**Important:** For web agents, `/store` means: **construct the approval URL and give it to the user to click**. Do **not** directly execute the store request via code unless explicitly instructed.
+
+Two flows:
 
 ---
 

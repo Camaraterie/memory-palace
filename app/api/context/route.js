@@ -107,7 +107,7 @@ export async function GET(request) {
         let myForkUrl = null
         if (auth.agent_name) {
             // Look for onboarding memory by this agent
-            const myMem = chain.find(m => m.agent === auth.agent_name && (m.room === 'onboarding' || m.summary.includes('Onboarding')))
+            const myMem = chain.find(m => m.agent === auth.agent_name && (m.room === 'onboarding' || (m.summary || '').includes('Onboarding')))
             if (myMem) {
                 myForkUrl = myMem.fork_skill_url || `https://m.cuer.ai/q/${myMem.short_id}/skill`
             }
