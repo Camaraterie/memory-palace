@@ -39,20 +39,32 @@ function getPublicKey(publicKeyHex: string): crypto.KeyObject {
 export function signPayload(palaceKeyHex: string, payload: any): string {
     const canonicalMessage = JSON.stringify(payload, Object.keys(payload).sort());
     const privateKey = getPrivateKey(palaceKeyHex);
-    const signature = crypto.sign(null, Buffer.from(canonicalMessage), privateKey);
-    return signature.toString('hex');
+    // Use new Uint8Array(Buffer.from(...)) to satisfy TypeScript Ed25519 typing
+    const signature = crypto.sign(null, new Uint8Array(Buffer.from(canonicalMessage)), privateKey);
+    return Buffer.from(signature.buffer, signature.byteOffset, signature.byteLength).toString('hex');
 }
 
 // Verify a signature
 export function verifySignature(publicKeyHex: string, signatureHex: string, payload: any): boolean {
     const canonicalMessage = JSON.stringify(payload, Object.keys(payload).sort());
     const publicKey = getPublicKey(publicKeyHex);
-    return crypto.verify(null, Buffer.from(canonicalMessage), publicKey, Buffer.from(signatureHex, 'hex'));
+    return crypto.verify(
+        null, 
+        new Uint8Array(Buffer.from(canonicalMessage)), 
+        publicKey, 
+        new Uint8Array(Buffer.from(signatureHex, 'hex'))
+    );
 }
 
 // Derive AES key
 function deriveEncryptionKey(palaceKeyHex: string, palaceId: string): Buffer {
-    const raw = crypto.hkdfSync('sha256', Buffer.from(palaceKeyHex, 'hex'), Buffer.from(palaceId), Buffer.from('memory_palace_encryption'), 32);
+    const raw = crypto.hkdfSync(
+        'sha256', 
+        new Uint8Array(Buffer.from(palaceKeyHex, 'hex')), 
+        new Uint8Array(Buffer.from(palaceId)), 
+        new Uint8Array(Buffer.from('memory_palace_encryption')), 
+        32
+    );
     return Buffer.from(raw);
 }
 
@@ -60,7 +72,7 @@ function deriveEncryptionKey(palaceKeyHex: string, palaceId: string): Buffer {
 export function encryptPayload(palaceKeyHex: string, palaceId: string, payload: any): { ciphertext: string, iv: string, authTag: string } {
     const key = deriveEncryptionKey(palaceKeyHex, palaceId);
     const iv = crypto.randomBytes(12);
-    const cipher = crypto.createCipheriv('aes-256-gcm', key, iv);
+    const cipher = crypto.createCipheriv('aes-256-gcm', key as any, iv as any);
 
     const plaintext = JSON.stringify(payload);
     let ciphertext = cipher.update(plaintext, 'utf8', 'base64');
@@ -73,8 +85,8 @@ export function encryptPayload(palaceKeyHex: string, palaceId: string, payload: 
 // Decrypt payload
 export function decryptPayload(palaceKeyHex: string, palaceId: string, ciphertextB64: string, ivB64: string, authTagB64: string): any {
     const key = deriveEncryptionKey(palaceKeyHex, palaceId);
-    const decipher = crypto.createDecipheriv('aes-256-gcm', key, Buffer.from(ivB64, 'base64'));
-    decipher.setAuthTag(Buffer.from(authTagB64, 'base64'));
+    const decipher = crypto.createDecipheriv('aes-256-gcm', key as any, Buffer.from(ivB64, 'base64') as any);
+    decipher.setAuthTag(Buffer.from(authTagB64, 'base64') as any);
 
     let plaintext = decipher.update(ciphertextB64, 'base64', 'utf8');
     plaintext += decipher.final('utf8');

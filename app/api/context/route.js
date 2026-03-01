@@ -92,6 +92,7 @@ export async function GET(request) {
                 entry.summary = p.session_name || mem.session_name
                 entry.outcome = p.outcome || null
                 entry.room = p.metadata?.room || null
+                entry.fork_skill_url = p.metadata?.fork_skill_url || null
                 if (!openNextSteps.length && p.next_steps?.length) {
                     openNextSteps = p.next_steps
                 }
@@ -106,9 +107,9 @@ export async function GET(request) {
         let myForkUrl = null
         if (auth.agent_name) {
             // Look for onboarding memory by this agent
-            const myMem = chain.find(m => m.agent === auth.agent_name && m.room === 'onboarding')
+            const myMem = chain.find(m => m.agent === auth.agent_name && (m.room === 'onboarding' || (m.summary || '').includes('Onboarding')))
             if (myMem) {
-                myForkUrl = `https://m.cuer.ai/q/${myMem.short_id}/skill`
+                myForkUrl = myMem.fork_skill_url || `https://m.cuer.ai/q/${myMem.short_id}/skill`
             }
         }
 
