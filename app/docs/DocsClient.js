@@ -34,7 +34,7 @@ const DOCS = [
     {
         id: 'faq',
         title: 'FAQ',
-        url: 'https://m.cuer.ai/api/faq',
+        url: 'https://m.cuer.ai/faq',
         raw: 'https://raw.githubusercontent.com/Camaraterie/memory-palace/master/app/api/faq/route.js',
         description: 'Answers to common questions about memory fidelity, security, and character consistency.',
         icon: (
@@ -48,7 +48,7 @@ const DOCS = [
     {
         id: 'troubleshoot',
         title: 'Troubleshooting',
-        url: 'https://m.cuer.ai/api/troubleshoot',
+        url: 'https://m.cuer.ai/troubleshoot',
         raw: 'https://raw.githubusercontent.com/Camaraterie/memory-palace/master/app/api/troubleshoot/route.js',
         description: 'Fixes for 403 errors, distorted QR codes, and capability mismatches.',
         icon: (
@@ -89,10 +89,14 @@ export default function DocsClient() {
     return (
         <div className="stone-surface" style={{
             minHeight: '100vh',
-            padding: '4rem 2rem',
+            padding: '2rem',
         }}>
-            <div style={{ maxWidth: 900, margin: '0 auto' }}>
-                <div style={{ marginBottom: '4rem' }}>
+            <div style={{ maxWidth: 760, margin: '0 auto' }}>
+                <div style={{
+                    marginBottom: '3rem',
+                    paddingBottom: '1.5rem',
+                    borderBottom: '1px solid rgba(184, 134, 11, 0.12)',
+                }}>
                     <a href="/" style={{
                         color: 'var(--brass-dim)',
                         textDecoration: 'none',
@@ -105,21 +109,20 @@ export default function DocsClient() {
                         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                             <path d="M15 18l-6-6 6-6" />
                         </svg>
-                        Back to Palace
+                        m.cuer.ai
                     </a>
                     <h1 style={{
                         fontFamily: 'var(--font-display)',
                         fontSize: 'clamp(2rem, 5vw, 3rem)',
-                        fontWeight: 400,
-                        marginTop: '1rem',
+                        fontWeight: 600,
+                        marginTop: '0.75rem',
                         color: 'var(--stone-text)',
                     }}>Documentation</h1>
                     <p style={{
-                        fontSize: '1.05rem',
                         color: 'var(--stone-text-dim)',
-                        marginTop: '1rem',
+                        marginTop: '0.75rem',
+                        fontSize: '1rem',
                         lineHeight: 1.7,
-                        maxWidth: 600,
                     }}>
                         Guides and API reference for AI agents. AI Studio users should use the{' '}
                         <strong style={{ color: 'var(--brass)' }}>GitHub Raw</strong> links to avoid URL blocking.
@@ -185,16 +188,20 @@ export default function DocsClient() {
                     ))}
                 </div>
 
-                <footer style={{
-                    marginTop: '4rem',
+                <div style={{
+                    marginTop: '3rem',
                     paddingTop: '1.5rem',
                     borderTop: '1px solid rgba(184, 134, 11, 0.1)',
                     textAlign: 'center',
-                    color: 'var(--stone-text-dim)',
-                    fontSize: '0.85rem',
                 }}>
-                    All documentation is served as plain text or markdown for easy consumption by agents.
-                </footer>
+                    <p style={{ fontSize: '0.85rem', color: 'var(--stone-text-dim)' }}>
+                        <a href="/faq" style={{ color: 'var(--brass)', textDecoration: 'none' }}>FAQ</a>
+                        {' '}&middot;{' '}
+                        <a href="/troubleshoot" style={{ color: 'var(--brass)', textDecoration: 'none' }}>Troubleshoot</a>
+                        {' '}&middot;{' '}
+                        <a href="/skill" style={{ color: 'var(--brass)', textDecoration: 'none' }}>Skill file</a>
+                    </p>
+                </div>
             </div>
         </div>
     )

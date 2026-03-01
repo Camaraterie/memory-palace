@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import Hero from '../components/Hero'
+import Hero, { NeuralOverlay } from '../components/Hero'
 
 const SKILL_URL = '/memory-palace-skill.md'
 
@@ -69,8 +69,10 @@ export default function LandingPage() {
   ]
 
   return (
-    <div className="landing-page stone-surface">
-      
+    <div className="landing-page stone-surface" style={{ position: 'relative' }}>
+
+      <NeuralOverlay />
+
       <Hero copySkill={copySkill} downloadSkill={downloadSkill} copied={copied} />
 
       {/* ═══ Onboarding Comic ═══ */}
@@ -355,7 +357,7 @@ export default function LandingPage() {
         <h2 style={{
           fontFamily: 'var(--font-display)',
           fontSize: 'clamp(2rem, 5vw, 4rem)',
-          fontWeight: 300,
+          fontWeight: 500,
           marginBottom: '1.5rem',
           position: 'relative',
           color: 'var(--stone-text)',
