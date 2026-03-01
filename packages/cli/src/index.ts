@@ -75,7 +75,7 @@ program
 program
     .command('invite <agent_name>')
     .description('Create a guest key for an agent')
-    .option('--permissions <level>', 'read, write, or admin (default: read)', 'read')
+    .option('--permissions <level>', 'read, write, or admin (default: write)', 'write')
     .action(async (agent_name, options) => {
         await inviteAgent(agent_name, options.permissions);
     });

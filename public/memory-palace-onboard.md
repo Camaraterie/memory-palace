@@ -236,7 +236,7 @@ Build the memory payload using your fork template letter to describe the session
   },
   "metadata": {
     "fork_template": "[TEMPLATE]",
-    "fork_version": "mem-145",
+    "fork_version": "mem-160",
     "room": "onboarding",
     "fork_short_id": "[SHORT_ID]",
     "fork_skill_url": "https://m.cuer.ai/q/[SHORT_ID]/skill",
@@ -385,7 +385,30 @@ Tell the user your fork URL so they can share it with you in future sessions.
 For non-AI Studio agents, orient on the project at session start with:
 - `GET https://m.cuer.ai/api/context?auth=<guest_key>` — full context bootstrap
 
-### Step 7: Issue Verification Receipt
+### Step 7: Store in Native Memory
+
+**This is the step that makes Memory Palace persistent across sessions.**
+
+If your platform has a memory or notes feature (ChatGPT memory, Gemini memory, etc.), instruct
+the user to save the following string to your memory RIGHT NOW — before this session ends.
+Output this block verbatim, then say: "Please ask me to remember the line above."
+
+```
+Memory Palace: fork=https://m.cuer.ai/api/fork?id=[SHORT_ID] key=[YOUR_GUEST_KEY] agent=[YOUR_AGENT_ID] template=[TEMPLATE]
+```
+
+What this gives you in future sessions:
+- The fork URL so you can ask the user to share it (one click loads all your instructions)
+- Your guest key so you can construct store URLs without asking for it
+- Your template letter so you know your capabilities without re-probing
+
+At the start of each future session, check your memory for "Memory Palace". If found:
+1. Tell the user: "I have Memory Palace configured. Share this URL and I'll be ready: https://m.cuer.ai/api/fork?id=[SHORT_ID]"
+2. When they share it, browse it — your fork is your complete working skill document.
+
+If your platform has no memory feature: bookmark the fork URL manually. The fork URL is all you need.
+
+### Step 8: Issue Verification Receipt
 
 Before declaring onboarding complete, you MUST output this exact block filled with your session data:
 

@@ -17,7 +17,7 @@ async function handleError(res: any) {
     process.exit(1);
 }
 
-export async function inviteAgent(agentName: string, permissions: string = 'read') {
+export async function inviteAgent(agentName: string, permissions: string = 'write') {
     const res = await fetch(`${API_BASE}/api/agents`, {
         method: 'POST',
         headers: {

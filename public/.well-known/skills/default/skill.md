@@ -1266,7 +1266,7 @@ Plain text. Q&A covering what Memory Palace is, templates, guest keys, rooms, im
 Auth: `Bearer <palace_id>` (owner only).
 
 ```
-POST   /api/agents  { "agent_name": "chatgpt", "permissions": "read" }  → { guest_key: "gk_..." }
+POST   /api/agents  { "agent_name": "chatgpt", "permissions": "write" }  → { guest_key: "gk_..." }
 GET    /api/agents                                                        → { agents: [...] }
 DELETE /api/agents  { "agent_name": "chatgpt" }                          → revokes key
 ```
