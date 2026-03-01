@@ -1,6 +1,129 @@
 import { NextResponse } from 'next/server'
 import { createSupabaseAdmin } from '../../../lib/supabase'
 
+function renderHtml(shortId, memoryData, parsedPayload) {
+    const payload = parsedPayload || {}
+    const p = payload
+    const title = p.session_name || 'Memory Capsule'
+    const agent = memoryData.agent || 'Unknown Agent'
+    const date = new Date(memoryData.created_at).toLocaleString()
+    const imageUrl = p.image_url || ''
+    const context = p.conversation_context || ''
+    const outcome = p.outcome || ''
+    const built = p.built || []
+    const decisions = p.decisions || []
+    const nextSteps = p.next_steps || []
+    const files = p.files || []
+    const blockers = p.blockers || []
+
+    const outcomeColor = outcome === 'succeeded' ? '#4a9d6e' : outcome === 'failed' ? '#d94a4a' : '#b8860b'
+
+    return `<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>${title} — Memory Palace</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;600&family=JetBrains+Mono:wght@400&family=DM+Sans:wght@300;400;600&display=swap" rel="stylesheet"/>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'DM Sans',system-ui,sans-serif;background:#302c28;color:#f0ede6;line-height:1.6;-webkit-font-smoothing:antialiased}
+body::before{content:'';position:fixed;inset:0;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.06'/%3E%3C/svg%3E");pointer-events:none;z-index:9999}
+.container{max-width:900px;margin:0 auto;padding:2rem 1.5rem}
+.header{padding:1rem 0 2rem;border-bottom:1px solid rgba(184,134,11,0.15);margin-bottom:2rem}
+.badge{font-family:'JetBrains Mono',monospace;font-size:0.65rem;letter-spacing:0.15em;text-transform:uppercase;color:#b8860b;margin-bottom:0.5rem}
+h1{font-family:'Cormorant Garamond',serif;font-size:clamp(1.5rem,4vw,2.5rem);font-weight:400;color:#f0ede6}
+.meta{display:flex;flex-wrap:wrap;gap:1rem;margin-top:1rem;font-size:0.8rem;color:#b8b3a8}
+.meta-item{font-family:'JetBrains Mono',monospace;font-size:0.7rem;text-transform:uppercase;letter-spacing:0.08em;padding:0.25rem 0.5rem;background:rgba(58,54,50,0.6);border:1px solid rgba(184,134,11,0.12);border-radius:4px}
+.outcome{color:${outcomeColor}}
+.image-frame{margin:2rem 0;border:2px solid #8b6914;border-radius:10px;overflow:hidden;box-shadow:inset 0 1px 0 rgba(212,160,23,0.15),0 4px 16px rgba(0,0,0,0.4)}
+.image-frame img{width:100%;display:block}
+.section{margin:2.5rem 0}
+.section-title{font-family:'JetBrains Mono',monospace;font-size:0.65rem;letter-spacing:0.15em;text-transform:uppercase;color:#b8860b;margin-bottom:1rem;display:flex;align-items:center;gap:0.75rem}
+.section-title::after{content:'';flex:1;height:1px;background:linear-gradient(90deg,rgba(184,134,11,0.2),transparent)}
+.tablet{background:linear-gradient(180deg,rgba(58,54,50,0.6),rgba(48,44,40,0.8));border:1px solid rgba(184,134,11,0.12);border-radius:6px;padding:1rem 1.25rem;margin-bottom:0.75rem;font-size:0.9rem;color:#b8b3a8;line-height:1.7}
+.tablet-list{display:flex;flex-direction:column;gap:0.5rem}
+.file-tag{display:inline-block;font-family:'JetBrains Mono',monospace;font-size:0.7rem;padding:0.15rem 0.5rem;background:rgba(74,127,217,0.08);border:1px solid rgba(74,127,217,0.15);border-radius:3px;color:#4a7fd9;margin:0.15rem}
+.blocker{background:rgba(217,74,74,0.06);border-color:rgba(217,74,74,0.15);color:#d94a4a}
+.context{font-family:'Cormorant Garamond',serif;font-size:1.15rem;font-style:italic;color:#b8b3a8;line-height:1.8}
+.footer{margin-top:3rem;padding-top:1.5rem;border-top:1px solid rgba(184,134,11,0.1);text-align:center;font-size:0.75rem;color:#b8b3a8}
+.footer a{color:#b8860b;text-decoration:none}
+.num{color:#b8860b;font-family:'JetBrains Mono',monospace;margin-right:0.75rem;font-size:0.8rem}
+</style>
+</head>
+<body>
+<div class="container">
+<div class="header">
+<div class="badge">Memory Capsule &middot; ${shortId}</div>
+<h1>${title}</h1>
+<div class="meta">
+<span class="meta-item">${agent}</span>
+<span class="meta-item">${date}</span>
+${outcome ? `<span class="meta-item outcome">${outcome}</span>` : ''}
+</div>
+</div>
+
+${imageUrl ? `<div class="image-frame"><img src="${imageUrl}" alt="${title}"/></div>` : ''}
+
+${context ? `
+<div class="section">
+<div class="section-title">Narrative Context</div>
+<p class="context">${context}</p>
+</div>` : ''}
+
+${built.length > 0 ? `
+<div class="section">
+<div class="section-title">Artifacts Constructed</div>
+<div class="tablet-list">
+${built.map(b => `<div class="tablet">${b}</div>`).join('')}
+</div>
+</div>` : ''}
+
+${decisions.length > 0 ? `
+<div class="section">
+<div class="section-title">Architectural Decisions</div>
+<div class="tablet-list">
+${decisions.map(d => `<div class="tablet">&ldquo;${d}&rdquo;</div>`).join('')}
+</div>
+</div>` : ''}
+
+${nextSteps.length > 0 ? `
+<div class="section">
+<div class="section-title">Future Directives</div>
+<div class="tablet-list">
+${nextSteps.map((s, i) => `<div class="tablet"><span class="num">${(i + 1).toString().padStart(2, '0')}</span>${s}</div>`).join('')}
+</div>
+</div>` : ''}
+
+${files.length > 0 ? `
+<div class="section">
+<div class="section-title">Modified Symbols</div>
+<div style="display:flex;flex-wrap:wrap;gap:0.25rem">
+${files.map(f => `<span class="file-tag">${f}</span>`).join('')}
+</div>
+</div>` : ''}
+
+${blockers.length > 0 ? `
+<div class="section">
+<div class="section-title" style="color:#d94a4a">Critical Impasse</div>
+<div class="tablet-list">
+${blockers.map(b => `<div class="tablet blocker">! ${b}</div>`).join('')}
+</div>
+</div>` : ''}
+
+<div class="footer">
+<p>
+<a href="/q/${shortId}">JSON</a> &middot;
+<a href="https://m.cuer.ai/memory-palace-skill.md">Skill File</a> &middot;
+<a href="https://cuer.ai">CueR.ai</a>
+</p>
+</div>
+</div>
+</body>
+</html>`
+}
+
 export async function GET(request, context) {
     try {
         const params = await context.params
@@ -25,6 +148,22 @@ export async function GET(request, context) {
             encrypted = false
         } catch (e) {
             // encrypted
+        }
+
+        // Content negotiation: browser gets HTML, agents get JSON
+        const accept = request.headers.get('accept') || ''
+        const wantsJson = accept.includes('application/json')
+        const isAgent = accept === '*/*' || accept === 'application/json'
+
+        // Serve HTML to browsers (unless explicitly requesting JSON)
+        if (!wantsJson && !isAgent && !encrypted && accept.includes('text/html')) {
+            const html = renderHtml(shortId, memoryData, parsedPayload)
+            return new NextResponse(html, {
+                headers: {
+                    'Content-Type': 'text/html; charset=utf-8',
+                    'Cache-Control': 'public, max-age=3600',
+                },
+            })
         }
 
         const baseUrl = 'https://m.cuer.ai'

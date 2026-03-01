@@ -32,7 +32,7 @@ export async function saveMemory(filePath: string): Promise<SaveResult> {
         const dir = path.join(os.homedir(), '.memorypalace', 'memories');
         fs.mkdirSync(dir, { recursive: true });
         qr_path = path.join(dir, `${result.short_id}-qr.png`);
-        fs.writeFileSync(qr_path, Buffer.from(b64, 'base64'));
+        fs.writeFileSync(qr_path, Buffer.from(b64, 'base64') as any);
         console.log(`  QR:  ${qr_path}`);
     }
 
