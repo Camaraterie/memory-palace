@@ -62,7 +62,7 @@ export default function SkillClient({ content }) {
             <h1 style={{
               fontFamily: 'var(--font-display)',
               fontSize: '1.75rem',
-              fontWeight: 400,
+              fontWeight: 600,
               marginTop: '0.5rem',
               color: 'var(--stone-text)',
             }}>Memory Palace Skill</h1>

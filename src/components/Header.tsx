@@ -62,8 +62,6 @@ export default function Header() {
       justifyContent: 'space-between',
       alignItems: 'center',
       background: 'rgba(48, 44, 40, 0.9)',
-      backdropFilter: 'blur(16px)',
-      WebkitBackdropFilter: 'blur(16px)',
       borderBottom: '1px solid rgba(184, 134, 11, 0.2)',
       boxShadow: '0 4px 12px rgba(0, 0, 0, 0.25)',
     }}>
@@ -78,7 +76,7 @@ export default function Header() {
         <AtomIcon />
         <div>
           <div style={{
-            fontFamily: "'Cormorant Garamond', Georgia, serif",
+            fontFamily: 'var(--font-display)',
             fontSize: '1.25rem',
             fontWeight: 700,
             letterSpacing: '0.02em',
@@ -104,8 +102,8 @@ export default function Header() {
       {/* Navigation */}
       <div style={{ display: 'flex', gap: '0.6rem', alignItems: 'center' }}>
         <div className="nav-links-desktop" style={{ display: 'flex', gap: '0.5rem' }}>
-          <NavLink href="/api/faq" icon={<HelpIcon />}>FAQ</NavLink>
-          <NavLink href="/api/troubleshoot" icon={<ToolIcon />}>Troubleshoot</NavLink>
+          <NavLink href="/faq" icon={<HelpIcon />}>FAQ</NavLink>
+          <NavLink href="/troubleshoot" icon={<ToolIcon />}>Troubleshoot</NavLink>
           <NavLink href="/docs" icon={<BookIcon />}>Docs</NavLink>
           <NavLink href="#" icon={<RssIcon />}>Blog</NavLink>
         </div>
