@@ -379,13 +379,52 @@
       ],
       "blockers": [],
       "prev": "mem-133",
+      "next": "2od88mp"
+    },
+    {
+      "id": "2od88mp",
+      "timestamp": "2026-03-01T10:37:00Z",
+      "agent": "claude-sonnet-4-6",
+      "room": "frontend",
+      "image_path": ".palace/memories/2od88mp.png",
+      "prompt_path": ".palace/prompts/mem-164.txt",
+      "qr_url": "https://m.cuer.ai/q/2od88mp/qr",
+      "short_id": "2od88mp",
+      "summary": "mem-164: Unify typography to sans-serif & align Docs page layout",
+      "outcome": "succeeded",
+      "repo": "https://github.com/Camaraterie/memory-palace.git",
+      "branch": "frontend-v2",
+      "artifacts": [
+        {
+          "path": "app/globals.css",
+          "description": "--font-display changed to DM Sans, heading weights bumped"
+        },
+        {
+          "path": "app/layout.js",
+          "description": "Removed Cormorant Garamond from Google Fonts URL"
+        },
+        {
+          "path": "src/components/Header.tsx",
+          "description": "Replaced literal serif fontFamily with CSS var"
+        },
+        {
+          "path": "app/docs/DocsClient.js",
+          "description": "Aligned header/footer with FAQ/Troubleshoot, maxWidth 760"
+        }
+      ],
+      "next_steps": [
+        "Visual QA across all page routes",
+        "Verify no serif remnants in browser DevTools"
+      ],
+      "blockers": [],
+      "prev": "b3s8k13",
       "next": null
     }
   ],
-  "total_memories": 10,
+  "total_memories": 11,
   "open_next_steps": [
-    "Validate image generation in live environment",
-    "Coordinate npm publish for mempalace@2.0.0"
+    "Visual QA across all page routes",
+    "Verify no serif remnants in browser DevTools"
   ],
   "repo": null,
   "agents_roster": [
