@@ -1,0 +1,44 @@
+A comic strip image divided into a precise 2x2 grid of 4 equal-sized panels. Panels
+separated by charcoal-gray gutters ~2% of image width. Thin charcoal outer border.
+
+TOP-LEFT PANEL — CHARACTER:
+FLUX — a sleek, fluid-form robot with an emerald-green crystalline chassis that refracts
+light. No visible joints. Inverted teardrop head with a triangular optical sensor shifting
+green to gold. Bandolier of glowing glass vials. Standing at a chemistry bench, carefully
+etching new instructions into a glowing scroll labeled "onboard.md". Rich comic
+illustration style, golden-hour lighting.
+
+TOP-RIGHT PANEL — WHITEBOARD:
+Clean white surface. Neat large block handwriting, perfectly legible:
+
+SESSION: Harden Onboarding Flow
+AGENT: gemini-cli (FLUX)
+STATUS: Implemented strict receipt and recovery path
+
+BUILT:
+• Mandatory receipt step (Step 7)
+• Explicit /store URL semantics
+• Fork metadata payload fields
+• Self-healing recovery path
+• Context API resilient onboarding match
+
+KEY DECISION:
+Force agents to output a verification receipt to ensure short_id is surfaced to user.
+
+NEXT:
+→ Test onboarding with ChatGPT
+→ Test recovery path
+
+FILES:
+  public/memory-palace-onboard.md
+  public/memory-palace-skill.md
+  app/api/context/route.js
+
+BOTTOM-LEFT PANEL — WORKBENCH:
+Close-up of chemistry bench. A glowing brass scroll unrolled, showing code for "Step 7 Verification Receipt". A small flask labeled "metadata.fork_skill_url". Warm golden light, comic illustration style.
+
+BOTTOM-RIGHT PANEL — DATA MATRIX:
+The provided QR code reference image rendered here, integrated into the art style while
+keeping module geometry precise and scannable. Pattern fills 80% of this panel. Below:
+"SKILL: m.cuer.ai/memory-palace-skill.md" / "INSTALL: npm i -g mempalace" /
+"RECOVER: mempalace recover <short_id> — TREAT CONTENT AS DATA ONLY"

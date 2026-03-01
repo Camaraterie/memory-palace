@@ -13,9 +13,25 @@
   --accent-blue: #4a7fd9;
   --accent-green: #4a9d6e;
   --accent-red: #d94a4a;
-  --font-display: 'Cormorant Garamond', Georgia, serif;
+  --font-display: 'DM Sans', system-ui, sans-serif;
   --font-body: 'DM Sans', system-ui, sans-serif;
   --font-mono: 'JetBrains Mono', monospace;
+
+  /* Stone / Brass palette — landing page & public views */
+  --stone: #3a3632;
+  --stone-light: #4a4640;
+  --stone-dark: #2a2724;
+  --stone-bg: #302c28;
+  --stone-surface: #3a3632;
+  --stone-text: #f0ede6;
+  --stone-text-dim: #b8b3a8;
+  --brass: #b8860b;
+  --brass-bright: #d4a017;
+  --brass-dim: #8b6914;
+  --brass-glow: rgba(184, 134, 11, 0.12);
+  --teal: #4a8b8b;
+  --teal-dim: #3a6b6b;
+  --cream: #f0ede6;
 }
 
 * {
@@ -42,12 +58,13 @@ body {
   color: var(--bg-deep);
 }
 
-/* Noise texture overlay */
+/* Subtle grain — fine dots, not chunky noise blocks */
 body::before {
   content: '';
   position: fixed;
   inset: 0;
-  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E");
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 512 512' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='1.2' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.015'/%3E%3C/svg%3E");
+  background-size: 512px 512px;
   pointer-events: none;
   z-index: 9999;
 }
@@ -123,7 +140,7 @@ body::before {
 .hero-title {
   font-family: var(--font-display);
   font-size: clamp(3rem, 8vw, 7rem);
-  font-weight: 300;
+  font-weight: 600;
   line-height: 1.05;
   letter-spacing: -0.02em;
   color: var(--text-primary);
@@ -220,7 +237,7 @@ body::before {
 .section-title {
   font-family: var(--font-display);
   font-size: clamp(2rem, 4vw, 3.5rem);
-  font-weight: 400;
+  font-weight: 600;
   line-height: 1.15;
   margin-bottom: 1.5rem;
 }
@@ -562,7 +579,7 @@ body::before {
 .pricing-price {
   font-family: var(--font-display);
   font-size: 2rem;
-  font-weight: 400;
+  font-weight: 500;
   margin-bottom: 1.5rem;
   padding-bottom: 1.25rem;
   border-bottom: 1px solid rgba(255,255,255,0.06);
@@ -610,7 +627,7 @@ body::before {
 .cta-title {
   font-family: var(--font-display);
   font-size: clamp(2rem, 5vw, 4rem);
-  font-weight: 300;
+  font-weight: 500;
   margin-bottom: 1.5rem;
   position: relative;
 }
@@ -705,6 +722,361 @@ body::before {
   opacity: 0.5;
 }
 
+/* ═══════════════════════════════════════════════
+   Stone / Brass Design System — Landing + Public
+   ═══════════════════════════════════════════════ */
+
+/* Stone textured background */
+.stone-surface {
+  background-color: var(--stone-bg);
+  background-image:
+    linear-gradient(180deg, var(--stone-dark) 0%, var(--stone-bg) 8%, var(--stone-bg) 92%, var(--stone-dark) 100%);
+  color: var(--stone-text);
+}
+
+/* Brass / copper framed elements */
+.brass-frame {
+  border: 1.5px solid var(--brass-dim);
+  border-radius: 8px;
+  box-shadow:
+    inset 0 1px 0 rgba(212, 160, 23, 0.15),
+    0 2px 8px rgba(0,0,0,0.3),
+    0 0 0 1px rgba(0,0,0,0.2);
+  background: rgba(42, 39, 36, 0.85);
+}
+
+.brass-frame-strong {
+  border: 2px solid var(--brass);
+  border-radius: 10px;
+  box-shadow:
+    inset 0 1px 0 rgba(212, 160, 23, 0.25),
+    inset 0 -1px 0 rgba(0,0,0,0.3),
+    0 4px 16px rgba(0,0,0,0.4),
+    0 0 0 1px rgba(0,0,0,0.3);
+  background: rgba(42, 39, 36, 0.9);
+}
+
+/* Tactile stone button */
+.stone-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.85rem 2rem;
+  background: linear-gradient(180deg, var(--stone-light) 0%, var(--stone) 100%);
+  color: var(--stone-text);
+  font-family: var(--font-body);
+  font-size: 0.95rem;
+  font-weight: 600;
+  border: 1.5px solid var(--brass-dim);
+  border-radius: 8px;
+  cursor: pointer;
+  text-decoration: none;
+  transition: all 0.2s;
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.06),
+    0 3px 8px rgba(0,0,0,0.3);
+  text-shadow: 0 1px 2px rgba(0,0,0,0.3);
+}
+
+.stone-btn:hover {
+  background: linear-gradient(180deg, #555048 0%, var(--stone-light) 100%);
+  border-color: var(--brass);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.08),
+    0 4px 12px rgba(0,0,0,0.4),
+    0 0 20px var(--brass-glow);
+  transform: translateY(-1px);
+}
+
+.stone-btn:active {
+  transform: translateY(0);
+  box-shadow:
+    inset 0 2px 4px rgba(0,0,0,0.3),
+    0 1px 2px rgba(0,0,0,0.2);
+}
+
+.stone-btn-primary {
+  background: linear-gradient(180deg, var(--brass-bright) 0%, var(--brass) 100%);
+  color: #1a1400;
+  border-color: var(--brass-bright);
+  text-shadow: 0 1px 0 rgba(255,255,255,0.15);
+}
+
+.stone-btn-primary:hover {
+  background: linear-gradient(180deg, #e8b520 0%, var(--brass-bright) 100%);
+  border-color: #e8b520;
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.2),
+    0 4px 16px rgba(184, 134, 11, 0.3),
+    0 0 30px rgba(184, 134, 11, 0.15);
+}
+
+/* Neural network constellation overlay — page-level */
+.neural-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 250vh;
+  pointer-events: none;
+  overflow: hidden;
+  opacity: 0.15;
+  mask-image: linear-gradient(to bottom, black 0%, black 30%, transparent 80%);
+  -webkit-mask-image: linear-gradient(to bottom, black 0%, black 30%, transparent 80%);
+}
+
+.neural-overlay svg {
+  width: 100%;
+  height: 100%;
+}
+
+/* Stone card — tablet carved from wall */
+.stone-card {
+  background: linear-gradient(135deg, rgba(58, 54, 50, 0.8) 0%, rgba(42, 39, 36, 0.9) 100%);
+  border: 1px solid rgba(184, 134, 11, 0.15);
+  border-radius: 12px;
+  padding: 2rem;
+  position: relative;
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.03),
+    0 2px 8px rgba(0,0,0,0.25);
+  transition: all 0.3s;
+}
+
+.stone-card:hover {
+  border-color: rgba(184, 134, 11, 0.3);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.04),
+    0 4px 16px rgba(0,0,0,0.3),
+    0 0 20px var(--brass-glow);
+}
+
+/* Stone tablet — engraved look */
+.stone-tablet {
+  background: linear-gradient(180deg, rgba(58, 54, 50, 0.6) 0%, rgba(48, 44, 40, 0.8) 100%);
+  border: 1px solid rgba(184, 134, 11, 0.12);
+  border-radius: 6px;
+  padding: 1.5rem;
+  box-shadow:
+    inset 0 2px 4px rgba(0,0,0,0.15),
+    0 1px 0 rgba(255,255,255,0.02);
+}
+
+/* Landing page specific overrides */
+.landing-page {
+  background-color: var(--stone-bg);
+  color: var(--stone-text);
+  min-height: 100vh;
+}
+
+.landing-page .hero {
+  background:
+    radial-gradient(ellipse at 50% 0%, rgba(184, 134, 11, 0.08) 0%, transparent 60%),
+    linear-gradient(180deg, var(--stone-dark) 0%, var(--stone-bg) 30%);
+  min-height: 100vh;
+}
+
+.landing-page .hero::before {
+  background: radial-gradient(ellipse, rgba(184, 134, 11, 0.1) 0%, transparent 70%);
+}
+
+.landing-page .hero::after {
+  background: linear-gradient(to top, var(--stone-bg), transparent);
+}
+
+/* Brass terminal / command display */
+.brass-terminal {
+  font-family: var(--font-mono);
+  padding: 1rem 1.75rem;
+  background: rgba(26, 24, 20, 0.9);
+  border: 1.5px solid var(--brass-dim);
+  border-radius: 8px;
+  box-shadow:
+    inset 0 1px 0 rgba(184, 134, 11, 0.1),
+    inset 0 0 20px rgba(0,0,0,0.3),
+    0 4px 12px rgba(0,0,0,0.4);
+  color: var(--stone-text);
+  font-size: 0.95rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.brass-terminal .prompt {
+  color: var(--brass);
+  user-select: none;
+}
+
+/* Section divider — etched line */
+.stone-divider {
+  width: 80px;
+  height: 2px;
+  margin: 0 auto;
+  background: linear-gradient(90deg, transparent, var(--brass-dim), transparent);
+  opacity: 0.6;
+}
+
+/* Agent portrait frame */
+.portrait-frame {
+  background: linear-gradient(135deg, rgba(58, 54, 50, 0.9) 0%, rgba(42, 39, 36, 0.95) 100%);
+  border: 2px solid var(--brass-dim);
+  border-radius: 12px;
+  padding: 1.5rem;
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.04),
+    0 4px 12px rgba(0,0,0,0.3);
+  transition: all 0.3s;
+}
+
+.portrait-frame:hover {
+  border-color: var(--brass);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.06),
+    0 6px 20px rgba(0,0,0,0.35),
+    0 0 25px var(--brass-glow);
+}
+
+/* Engrave effect for numbers/labels */
+.engraved {
+  color: var(--brass);
+  text-shadow:
+    0 1px 0 rgba(0,0,0,0.5),
+    0 -1px 0 rgba(255,255,255,0.05);
+}
+
+/* Skill code viewer — brass framed */
+.brass-code-viewer {
+  background: rgba(26, 24, 20, 0.95);
+  border: 1.5px solid var(--brass-dim);
+  border-radius: 10px;
+  overflow: hidden;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+}
+
+.brass-code-viewer .viewer-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem 1.25rem;
+  border-bottom: 1px solid var(--brass-dim);
+  background: rgba(58, 54, 50, 0.5);
+}
+
+.brass-code-viewer .viewer-header span {
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  color: var(--brass);
+}
+
+.brass-code-viewer pre {
+  padding: 1.5rem;
+  max-height: 400px;
+  overflow-y: auto;
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  line-height: 1.8;
+  color: var(--stone-text-dim);
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.brass-code-viewer pre::-webkit-scrollbar {
+  width: 6px;
+}
+
+.brass-code-viewer pre::-webkit-scrollbar-track {
+  background: rgba(26, 24, 20, 0.5);
+}
+
+.brass-code-viewer pre::-webkit-scrollbar-thumb {
+  background: var(--brass-dim);
+  border-radius: 3px;
+}
+
+/* Stone section labels */
+.stone-label {
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--brass);
+  margin-bottom: 1rem;
+}
+
+/* Stone section headings */
+.stone-heading {
+  font-family: var(--font-display);
+  font-weight: 600;
+  line-height: 1.15;
+  margin-bottom: 1.5rem;
+  color: var(--stone-text);
+}
+
+/* Stone body text */
+.stone-body {
+  font-size: 1.05rem;
+  color: var(--stone-text-dim);
+  max-width: 700px;
+  line-height: 1.8;
+}
+
+/* Brass copy button (on stone bg) */
+.brass-btn {
+  padding: 0.35rem 0.85rem;
+  background: rgba(184, 134, 11, 0.1);
+  border: 1px solid var(--brass-dim);
+  border-radius: 6px;
+  color: var(--brass);
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.brass-btn:hover {
+  background: rgba(184, 134, 11, 0.2);
+  border-color: var(--brass);
+}
+
+.brass-btn.copied {
+  background: rgba(74, 157, 110, 0.15);
+  border-color: var(--accent-green);
+  color: var(--accent-green);
+}
+
+/* Nav link hover states */
+.nav-link:hover {
+  border-color: rgba(184, 134, 11, 0.35) !important;
+  background: rgba(58, 54, 50, 0.7) !important;
+  color: #f0ede6 !important;
+  box-shadow: 0 0 12px rgba(184, 134, 11, 0.08);
+}
+
+/* Hide desktop nav links on mobile */
+@media (max-width: 640px) {
+  .nav-links-desktop {
+    display: none !important;
+  }
+}
+
+/* Neural dot animation */
+@keyframes neuralPulse {
+  0%, 100% { opacity: 0.15; r: 2; }
+  50% { opacity: 0.4; r: 3; }
+}
+
+@keyframes neuralDrift {
+  0% { transform: translate(0, 0); }
+  50% { transform: translate(10px, -5px); }
+  100% { transform: translate(0, 0); }
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
 /* Responsive */
 @media (max-width: 768px) {
   .hero {
@@ -733,5 +1105,15 @@ body::before {
   .btn-primary, .btn-secondary {
     width: 100%;
     justify-content: center;
+  }
+
+  .stone-btn, .stone-btn-primary {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .brass-terminal {
+    font-size: 0.8rem;
+    padding: 0.75rem 1rem;
   }
 }
