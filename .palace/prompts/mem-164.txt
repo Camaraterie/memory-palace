@@ -1,0 +1,49 @@
+MEMORY PALACE — Session Image Prompt
+Agent: FORGE (Claude Code — Opus 4.6)
+Session: mem-164
+Title: Unify Typography to Sans-Serif
+
+SCENE LAYOUT: 4-panel comic strip (2×2 grid), 1024×1024 pixels.
+Each panel is square (512×512). Bold black gutters (8px) between panels.
+
+STYLE: Warm, cozy workshop interior. Muted earth tones — stone walls, brass fixtures, warm amber lighting. Painterly digital illustration style with soft edges.
+
+---
+
+PANEL 1 (top-left) — "THE AUDIT"
+FORGE stands at a large stone wall covered with pinned typography specimens. His amber optical sensors scan a wall of font samples. In his left hand he holds a brass magnifying glass over a sample labeled "Cormorant Garamond" with a red X through it. His right hand points to a sample labeled "DM Sans" with a brass check mark. The whiteboard behind reads:
+
+WHITEBOARD TEXT:
+mem-164: UNIFY TYPOGRAPHY
+font-display: DM Sans
+Kill serif · Keep mono for code
+8 files · 0 errors
+
+---
+
+PANEL 2 (top-right) — "THE WEIGHT ROOM"
+Close-up of FORGE's workbench. Brass scales balance font weight samples. Left scale pan holds "300" (light, floating up), right pan holds "600" (heavy, sinking down). Tiny brass labels on each weight: "hero-title", "section-title", "stone-heading", "cta-title". A clipboard on the bench shows a checklist with brass check marks next to each item. Warm amber light from a desk lamp illuminates the scene.
+
+WHITEBOARD TEXT:
+WEIGHT BUMP: 300→600
+hero-title ✓  section-title ✓
+stone-heading ✓  cta-title 500 ✓
+pricing-price 500 ✓
+
+---
+
+PANEL 3 (bottom-left) — "DOCS ALIGNMENT"
+FORGE holds three stone tablets side by side — labeled "FAQ", "Troubleshoot", and "Docs". The FAQ and Troubleshoot tablets are identical in size and shape (matching). The Docs tablet is being chiseled by FORGE to match — stone chips falling. A brass ruler measures "760px" across all three. The back-link text "m.cuer.ai" is etched into each tablet header.
+
+WHITEBOARD TEXT:
+DOCS PAGE ALIGNED
+maxWidth: 760px (was 900)
+header: m.cuer.ai ← back
+footer: FAQ · Troubleshoot · Skill
+
+---
+
+PANEL 4 (bottom-right) — QR CODE PANEL
+A real QR code centered in a brass frame, mounted on the stone workshop wall. The frame has small brass plaques reading "mem-164" at top and "FORGE" at bottom. Clean, high-contrast black-on-white QR code, perfectly square, no rotation. Stone wall texture visible around the frame.
+
+The QR code is a REAL QR CODE IMAGE — use the reference QR code provided.

@@ -2,7 +2,7 @@
 
 import HeroComic from './HeroComic'
 
-function NeuralOverlay() {
+export function NeuralOverlay() {
   const nodes = [
     { cx: 120, cy: 80, delay: 0 },
     { cx: 280, cy: 140, delay: 0.5 },
@@ -68,8 +68,8 @@ function NeuralOverlay() {
 
 export default function Hero({ copySkill, downloadSkill, copied }) {
   return (
-    <section className="hero" style={{ 
-      position: 'relative', 
+    <section className="hero" style={{
+      position: 'relative',
       minHeight: '100vh',
       display: 'flex',
       alignItems: 'center',
@@ -77,12 +77,11 @@ export default function Hero({ copySkill, downloadSkill, copied }) {
       padding: '4rem 2rem',
       overflow: 'hidden'
     }}>
-      <NeuralOverlay />
-      
-      <div style={{ 
-        position: 'relative', 
-        zIndex: 2, 
-        maxWidth: '1200px', 
+
+      <div style={{
+        position: 'relative',
+        zIndex: 2,
+        maxWidth: '1200px',
         width: '100%',
         display: 'flex',
         flexDirection: 'row',
@@ -91,7 +90,7 @@ export default function Hero({ copySkill, downloadSkill, copied }) {
         gap: '4rem',
         flexWrap: 'wrap'
       }}>
-        
+
         {/* Left: Content */}
         <div style={{ flex: '1 1 500px', textAlign: 'left' }}>
           <div className="hero-badge" style={{ borderColor: 'var(--brass-dim)', color: 'var(--brass)', background: 'rgba(184,134,11,0.05)' }}>
@@ -99,8 +98,8 @@ export default function Hero({ copySkill, downloadSkill, copied }) {
             Powered by CueR.ai
           </div>
 
-          <h1 className="hero-title" style={{ 
-            color: 'var(--stone-text)', 
+          <h1 className="hero-title" style={{
+            color: 'var(--stone-text)',
             fontSize: 'clamp(2.5rem, 6vw, 5rem)',
             textAlign: 'left',
             margin: '0 0 1.5rem 0'
@@ -108,7 +107,7 @@ export default function Hero({ copySkill, downloadSkill, copied }) {
             Elevate Your <em style={{ color: 'var(--gold)' }}>Agent's Mind</em>
           </h1>
 
-          <p className="hero-subtitle" style={{ 
+          <p className="hero-subtitle" style={{
             color: 'var(--stone-text-dim)',
             textAlign: 'left',
             margin: '0 0 2.5rem 0',
@@ -134,9 +133,9 @@ export default function Hero({ copySkill, downloadSkill, copied }) {
         </div>
 
         {/* Right: Comic Image Panel */}
-        <div style={{ 
-          flex: '1 1 400px', 
-          display: 'flex', 
+        <div style={{
+          flex: '1 1 400px',
+          display: 'flex',
           justifyContent: 'center',
           animation: 'float 6s ease-in-out infinite'
         }}>
