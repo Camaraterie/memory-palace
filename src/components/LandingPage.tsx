@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import Hero, { NeuralOverlay } from '../components/Hero'
+import AudienceToggle from '../components/AudienceToggle'
 
 const SKILL_URL = '/memory-palace-skill.md'
 
