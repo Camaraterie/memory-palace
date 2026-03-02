@@ -1,6 +1,7 @@
 'use client'
 
 import HeroComic from './HeroComic'
+import AudienceToggle from './AudienceToggle'
 
 export function NeuralOverlay() {
   const nodes = [
@@ -74,25 +75,14 @@ export default function Hero({ copySkill, downloadSkill, copied }) {
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
-      padding: '4rem 2rem',
+      padding: '2rem 2rem',
       overflow: 'hidden'
     }}>
 
-      <div style={{
-        position: 'relative',
-        zIndex: 2,
-        maxWidth: '1200px',
-        width: '100%',
-        display: 'flex',
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        gap: '4rem',
-        flexWrap: 'wrap'
-      }}>
+      <div className="hero-3col" style={{ position: 'relative', zIndex: 2 }}>
 
-        {/* Left: Content */}
-        <div style={{ flex: '1 1 500px', textAlign: 'left' }}>
+        {/* Left: Text content */}
+        <div style={{ textAlign: 'left' }}>
           <div className="hero-badge" style={{ borderColor: 'var(--brass-dim)', color: 'var(--brass)', background: 'rgba(184,134,11,0.05)' }}>
             <span style={{ background: 'var(--brass)' }}></span>
             Powered by CueR.ai
@@ -100,9 +90,9 @@ export default function Hero({ copySkill, downloadSkill, copied }) {
 
           <h1 className="hero-title" style={{
             color: 'var(--stone-text)',
-            fontSize: 'clamp(2.5rem, 6vw, 5rem)',
+            fontSize: 'clamp(2.2rem, 4vw, 3.8rem)',
             textAlign: 'left',
-            margin: '0 0 1.5rem 0'
+            margin: '0 0 1rem 0'
           }}>
             Elevate Your <em style={{ color: 'var(--gold)' }}>Agent's Mind</em>
           </h1>
@@ -110,14 +100,13 @@ export default function Hero({ copySkill, downloadSkill, copied }) {
           <p className="hero-subtitle" style={{
             color: 'var(--stone-text-dim)',
             textAlign: 'left',
-            margin: '0 0 2.5rem 0',
-            maxWidth: '540px'
+            margin: '0 0 1.5rem 0',
           }}>
             Give any AI agent a skill file. It remembers sessions as illustrated images
             with embedded QR codes. One file — universal, lossless, cross-agent memory.
           </p>
 
-          <div className="brass-terminal" style={{ marginBottom: '2.5rem', display: 'flex' }}>
+          <div className="brass-terminal" style={{ marginBottom: '1.5rem', display: 'flex' }}>
             <span className="prompt">$</span>
             <span>npm i -g mempalace</span>
           </div>
@@ -132,15 +121,16 @@ export default function Hero({ copySkill, downloadSkill, copied }) {
           </div>
         </div>
 
-        {/* Right: Comic Image Panel */}
-        <div style={{
-          flex: '1 1 400px',
-          display: 'flex',
-          justifyContent: 'center',
-          animation: 'float 6s ease-in-out infinite'
-        }}>
+        {/* Center: Comic Image */}
+        <div style={{ animation: 'float 6s ease-in-out infinite' }}>
           <HeroComic />
         </div>
+
+        {/* Right: Audience Toggle */}
+        <div className="hero-3col-toggle">
+          <AudienceToggle />
+        </div>
+
       </div>
 
       <style jsx>{`
