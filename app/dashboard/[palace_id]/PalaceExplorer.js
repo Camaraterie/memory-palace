@@ -11,6 +11,7 @@ export default function PalaceExplorer({ palace, initialMemories }) {
     const [loading, setLoading] = useState(false)
     const [searchQuery, setSearchQuery] = useState('')
     const [filterAgent, setFilterAgent] = useState('')
+    const [filterPersona, setFilterPersona] = useState('')
 
     useEffect(() => {
         const fetchPalaceData = async () => {
@@ -38,11 +39,15 @@ export default function PalaceExplorer({ palace, initialMemories }) {
         summary: m.session_name,
         created_at: m.created_at,
         image_url: m.image_url,
+        personas: m.personas || null,
         room: m.status
     }))
 
     // Get unique agents for filter chips
     const uniqueAgents = [...new Set((allMemories || []).map(m => m.agent).filter(Boolean))]
+
+    // Get unique personas for filter chips
+    const uniquePersonas = [...new Set((allMemories || []).flatMap(m => m.personas || []).filter(Boolean))]
 
     // Apply filters
     const memories = (allMemories || []).filter(m => {
@@ -54,6 +59,7 @@ export default function PalaceExplorer({ palace, initialMemories }) {
             if (!matchSummary && !matchAgent && !matchRoom) return false
         }
         if (filterAgent && m.agent !== filterAgent) return false
+        if (filterPersona && (!m.personas || !m.personas.includes(filterPersona))) return false
         return true
     })
 
@@ -97,6 +103,22 @@ export default function PalaceExplorer({ palace, initialMemories }) {
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
                                     </svg>
                                     Palaces
+                                </Link>
+                                <Link href={`/dashboard/${palace.id}/personas`} style={{
+                                    color: 'var(--stone-text-dim)',
+                                    fontSize: '0.65rem',
+                                    fontFamily: 'var(--font-mono)',
+                                    display: 'inline-flex',
+                                    alignItems: 'center',
+                                    gap: '0.5rem',
+                                    textDecoration: 'none',
+                                    textTransform: 'uppercase',
+                                    letterSpacing: '0.2em',
+                                }}>
+                                    <svg width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                                    </svg>
+                                    Personas
                                 </Link>
                                 <Link href={`/dashboard/${palace.id}/blog`} style={{
                                     color: 'var(--stone-text-dim)',
@@ -244,9 +266,37 @@ export default function PalaceExplorer({ palace, initialMemories }) {
                                     {agent}
                                 </button>
                             ))}
-                            {(searchQuery || filterAgent) && (
+                            {uniquePersonas.map(persona => (
                                 <button
-                                    onClick={() => { setSearchQuery(''); setFilterAgent('') }}
+                                    key={persona}
+                                    onClick={() => setFilterPersona(filterPersona === persona ? '' : persona)}
+                                    style={{
+                                        padding: '0.3rem 0.75rem',
+                                        borderRadius: '100px',
+                                        fontSize: '0.625rem',
+                                        fontFamily: 'var(--font-mono)',
+                                        textTransform: 'uppercase',
+                                        letterSpacing: '0.1em',
+                                        cursor: 'pointer',
+                                        transition: 'all 0.2s',
+                                        border: '1px solid',
+                                        ...(filterPersona === persona ? {
+                                            background: 'rgba(74,127,217,0.15)',
+                                            borderColor: 'var(--teal)',
+                                            color: 'var(--teal)',
+                                        } : {
+                                            background: 'transparent',
+                                            borderColor: 'rgba(74,127,217,0.2)',
+                                            color: 'var(--stone-text-dim)',
+                                        }),
+                                    }}
+                                >
+                                    {persona}
+                                </button>
+                            ))}
+                            {(searchQuery || filterAgent || filterPersona) && (
+                                <button
+                                    onClick={() => { setSearchQuery(''); setFilterAgent(''); setFilterPersona('') }}
                                     style={{
                                         padding: '0.3rem 0.75rem',
                                         borderRadius: '100px',
@@ -344,6 +394,30 @@ export default function PalaceExplorer({ palace, initialMemories }) {
                                             <span>{memory.agent}</span>
                                             <span>{new Date(memory.created_at).toLocaleDateString()}</span>
                                         </div>
+                                        {memory.personas && memory.personas.length > 0 && (
+                                            <div style={{
+                                                display: 'flex',
+                                                flexWrap: 'wrap',
+                                                gap: '0.35rem',
+                                                marginBottom: '0.5rem',
+                                            }}>
+                                                {memory.personas.map(persona => (
+                                                    <span key={persona} style={{
+                                                        fontSize: '0.6rem',
+                                                        fontFamily: 'var(--font-mono)',
+                                                        padding: '0.15rem 0.5rem',
+                                                        background: 'rgba(74,127,217,0.1)',
+                                                        border: '1px solid rgba(74,127,217,0.2)',
+                                                        borderRadius: '4px',
+                                                        color: 'var(--teal)',
+                                                        textTransform: 'uppercase',
+                                                        letterSpacing: '0.05em',
+                                                    }}>
+                                                        {persona}
+                                                    </span>
+                                                ))}
+                                            </div>
+                                        )}
                                         <h3 style={{
                                             fontFamily: 'var(--font-display)',
                                             fontSize: '1.1rem',
@@ -412,7 +486,7 @@ export default function PalaceExplorer({ palace, initialMemories }) {
                                                 marginLeft: '1rem',
                                             }}>{new Date(memory.created_at).toLocaleString()}</span>
                                         </div>
-                                        <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
+                                        <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center', flexWrap: 'wrap' }}>
                                             <span style={{
                                                 fontSize: '0.625rem',
                                                 fontFamily: 'var(--font-mono)',
@@ -426,6 +500,21 @@ export default function PalaceExplorer({ palace, initialMemories }) {
                                             }}>
                                                 {memory.agent}
                                             </span>
+                                            {memory.personas && memory.personas.length > 0 && memory.personas.map(persona => (
+                                                <span key={persona} style={{
+                                                    fontSize: '0.6rem',
+                                                    fontFamily: 'var(--font-mono)',
+                                                    padding: '0.15rem 0.5rem',
+                                                    background: 'rgba(74,127,217,0.1)',
+                                                    border: '1px solid rgba(74,127,217,0.2)',
+                                                    borderRadius: '4px',
+                                                    color: 'var(--teal)',
+                                                    textTransform: 'uppercase',
+                                                    letterSpacing: '0.05em',
+                                                }}>
+                                                    {persona}
+                                                </span>
+                                            ))}
                                             {memory.room && (
                                                 <span style={{
                                                     fontSize: '0.625rem',
