@@ -15,12 +15,18 @@ export async function GET() {
   try {
     const supabase = createSupabaseAdmin()
 
-    const { data: posts, error } = await supabase
+    let query = supabase
       .from('blog_posts')
       .select('slug, title, subtitle, excerpt, author_persona, published_at, tags')
       .eq('status', 'published')
       .order('published_at', { ascending: false })
       .limit(20)
+
+    if (process.env.BLOG_HOME_PALACE_ID) {
+      query = query.eq('palace_id', process.env.BLOG_HOME_PALACE_ID)
+    }
+
+    const { data: posts, error } = await query
 
     if (error) throw error
 

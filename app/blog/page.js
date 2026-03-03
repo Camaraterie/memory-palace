@@ -12,12 +12,18 @@ export default async function BlogPage() {
   let posts = []
   try {
     const supabase = createSupabaseAdmin()
-    const { data, error } = await supabase
+    let query = supabase
       .from('blog_posts')
       .select('id, slug, title, subtitle, excerpt, author_persona, cover_image, tags, published_at, created_at')
       .eq('status', 'published')
       .order('published_at', { ascending: false })
       .limit(50)
+
+    if (process.env.BLOG_HOME_PALACE_ID) {
+      query = query.eq('palace_id', process.env.BLOG_HOME_PALACE_ID)
+    }
+
+    const { data, error } = await query
 
     if (!error && data) posts = data
   } catch (e) {

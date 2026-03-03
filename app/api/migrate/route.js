@@ -7,8 +7,12 @@ export async function POST(req) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
+  if (!process.env.DATABASE_URL) {
+    return NextResponse.json({ error: 'DATABASE_URL not configured' }, { status: 500 })
+  }
+
   const client = new Client({
-    connectionString: 'postgresql://postgres:dbjduzeunlfldquwwgsx@db.dbjduzeunlfldquwwgsx.supabase.co:5432/postgres'
+    connectionString: process.env.DATABASE_URL
   })
 
   try {
@@ -87,6 +91,101 @@ export async function POST(req) {
         await client.query(`ALTER TABLE memories DROP COLUMN IF EXISTS ${col};`);
       } catch (e) { }
     }
+
+    // Enable RLS on agents, blog_posts, personas
+    await client.query(`ALTER TABLE agents ENABLE ROW LEVEL SECURITY;`)
+    await client.query(`ALTER TABLE blog_posts ENABLE ROW LEVEL SECURITY;`)
+    await client.query(`ALTER TABLE personas ENABLE ROW LEVEL SECURITY;`)
+
+    // agents RLS policies
+    await client.query(`
+      DO $$
+      BEGIN
+        IF NOT EXISTS (
+            SELECT 1 FROM pg_policies WHERE tablename = 'agents' AND policyname = 'Users can manage agents in their own palaces'
+        ) THEN
+            CREATE POLICY "Users can manage agents in their own palaces"
+            ON agents FOR ALL
+            TO authenticated
+            USING (
+              EXISTS (
+                SELECT 1 FROM palaces WHERE palaces.id::text = agents.palace_id AND palaces.owner_id = auth.uid()
+              )
+            )
+            WITH CHECK (
+              EXISTS (
+                SELECT 1 FROM palaces WHERE palaces.id::text = agents.palace_id AND palaces.owner_id = auth.uid()
+              )
+            );
+        END IF;
+      END
+      $$;
+    `)
+
+    // blog_posts RLS policies
+    await client.query(`
+      DO $$
+      BEGIN
+        IF NOT EXISTS (
+            SELECT 1 FROM pg_policies WHERE tablename = 'blog_posts' AND policyname = 'Anyone can read published posts'
+        ) THEN
+            CREATE POLICY "Anyone can read published posts"
+            ON blog_posts FOR SELECT
+            TO anon, authenticated
+            USING (status = 'published');
+        END IF;
+      END
+      $$;
+    `)
+
+    await client.query(`
+      DO $$
+      BEGIN
+        IF NOT EXISTS (
+            SELECT 1 FROM pg_policies WHERE tablename = 'blog_posts' AND policyname = 'Users can manage posts in their own palaces'
+        ) THEN
+            CREATE POLICY "Users can manage posts in their own palaces"
+            ON blog_posts FOR ALL
+            TO authenticated
+            USING (
+              EXISTS (
+                SELECT 1 FROM palaces WHERE palaces.id::text = blog_posts.palace_id AND palaces.owner_id = auth.uid()
+              )
+            )
+            WITH CHECK (
+              EXISTS (
+                SELECT 1 FROM palaces WHERE palaces.id::text = blog_posts.palace_id AND palaces.owner_id = auth.uid()
+              )
+            );
+        END IF;
+      END
+      $$;
+    `)
+
+    // personas RLS policies
+    await client.query(`
+      DO $$
+      BEGIN
+        IF NOT EXISTS (
+            SELECT 1 FROM pg_policies WHERE tablename = 'personas' AND policyname = 'Users can manage personas in their own palaces'
+        ) THEN
+            CREATE POLICY "Users can manage personas in their own palaces"
+            ON personas FOR ALL
+            TO authenticated
+            USING (
+              EXISTS (
+                SELECT 1 FROM palaces WHERE palaces.id::text = personas.palace_id AND palaces.owner_id = auth.uid()
+              )
+            )
+            WITH CHECK (
+              EXISTS (
+                SELECT 1 FROM palaces WHERE palaces.id::text = personas.palace_id AND palaces.owner_id = auth.uid()
+              )
+            );
+        END IF;
+      END
+      $$;
+    `)
 
     await client.query("NOTIFY pgrst, 'reload schema';")
 

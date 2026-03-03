@@ -1282,6 +1282,8 @@ GET https://m.cuer.ai/api/blog/posts?tag=launch&limit=10&offset=0
 
 Returns `{ posts: [...], total }`. Each post includes `slug`, `title`, `subtitle`, `excerpt`, `author_persona`, `cover_image`, `tags`, `published_at`.
 
+**Blog scoping:** On the hosted instance (m.cuer.ai), the blog is scoped to the project's own palace via the `BLOG_HOME_PALACE_ID` env var. Self-hosted instances can set this env var to scope their blog to a single palace, or leave it unset for multi-tenant blog access (all published posts from all palaces are shown).
+
 ### GET /api/blog/posts/:slug — Single blog post (no auth)
 
 ```
@@ -1294,6 +1296,8 @@ Returns `{ success, post }` with full `content` (markdown), `social_variants`, `
 
 Auth: `Bearer <palace_id>` or `Bearer gk_<guest_key>` (requires write or admin permission).
 
+**Important:** Guest keys can only create/update posts with `status: 'draft'`. Attempting to set `status: 'published'` with a guest key returns 403. Only the palace owner (authenticating with `palace_id`) can publish posts directly, or use the publish endpoint below. This ensures human review of agent-generated content before it goes live.
+
 ```json
 {
   "slug": "my-post",
@@ -1302,7 +1306,7 @@ Auth: `Bearer <palace_id>` or `Bearer gk_<guest_key>` (requires write or admin p
   "subtitle": "Optional subtitle",
   "excerpt": "Optional excerpt",
   "author_persona": "curator",
-  "status": "published",
+  "status": "draft",
   "tags": ["tag1", "tag2"],
   "source_memories": ["abc1234"],
   "show_provenance": true,
@@ -1311,6 +1315,22 @@ Auth: `Bearer <palace_id>` or `Bearer gk_<guest_key>` (requires write or admin p
 ```
 
 If the slug already exists for the same palace, the post is updated. Auto-sets `published_at` when status changes to `published`. Returns `{ success, post }`.
+
+### POST /api/blog/posts/:slug/publish — Publish, unpublish, or reject a post (owner only)
+
+Auth: `Bearer <palace_id>` (palace owner only — guest keys rejected).
+
+```json
+{ "action": "publish" }
+```
+
+Actions: `publish` (sets status to published, sets `published_at` if first publish), `unpublish` (reverts to draft, clears `published_at`), `reject` (sets status to rejected). Returns `{ success, post }`.
+
+### GET /api/blog/drafts — List draft posts (owner only)
+
+Auth: `Bearer <palace_id>` (palace owner only — guest keys rejected).
+
+Returns `{ drafts: [...] }` with all posts in draft status for the authenticated palace, full content included, ordered by `updated_at DESC`.
 
 ### GET /api/blog/feed — RSS 2.0 feed (no auth)
 

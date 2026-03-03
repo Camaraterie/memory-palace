@@ -28,6 +28,10 @@ export async function GET(request) {
       .order('published_at', { ascending: false })
       .range(offset, offset + limit - 1)
 
+    if (process.env.BLOG_HOME_PALACE_ID) {
+      query = query.eq('palace_id', process.env.BLOG_HOME_PALACE_ID)
+    }
+
     if (tag) {
       query = query.contains('tags', [tag])
     }
@@ -56,6 +60,7 @@ export async function POST(request) {
 
     const token = authHeader.split(' ')[1]
     let palaceId = null
+    let isOwner = false
 
     if (token.startsWith('gk_')) {
       const { data: agent, error } = await supabase
@@ -80,6 +85,7 @@ export async function POST(request) {
         return NextResponse.json({ error: 'Invalid palace_id' }, { status: 403, headers: CORS_HEADERS })
       }
       palaceId = palace.id
+      isOwner = true
     }
 
     const body = await request.json()
@@ -87,6 +93,11 @@ export async function POST(request) {
 
     if (!slug || !title || !content) {
       return NextResponse.json({ error: 'slug, title, and content are required' }, { status: 400, headers: CORS_HEADERS })
+    }
+
+    // Guest keys can only create/update drafts — not publish directly
+    if (!isOwner && status === 'published') {
+      return NextResponse.json({ error: 'Guest keys cannot publish directly. Submit as draft for owner review.' }, { status: 403, headers: CORS_HEADERS })
     }
 
     // Check if slug exists for this palace (upsert)

@@ -24,24 +24,6 @@ export async function login(formData) {
     redirect('/dashboard')
 }
 
-export async function signup(formData) {
-    const supabase = await createClient()
-
-    const data = {
-        email: formData.get('email'),
-        password: formData.get('password'),
-    }
-
-    const { error } = await supabase.auth.signUp(data)
-
-    if (error) {
-        redirect('/login?message=Could not authenticate user')
-    }
-
-    revalidatePath('/', 'layout')
-    redirect('/dashboard')
-}
-
 export async function signout() {
     const supabase = await createClient()
     await supabase.auth.signOut()

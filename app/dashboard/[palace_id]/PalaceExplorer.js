@@ -81,23 +81,40 @@ export default function PalaceExplorer({ palace, initialMemories }) {
                 <header style={{ marginBottom: '3rem', borderBottom: '1px solid rgba(184,134,11,0.15)', paddingBottom: '2rem' }}>
                     <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'flex-start', gap: '1.5rem' }}>
                         <div>
-                            <Link href="/dashboard" style={{
-                                color: 'var(--stone-text-dim)',
-                                fontSize: '0.65rem',
-                                fontFamily: 'var(--font-mono)',
-                                marginBottom: '1rem',
-                                display: 'inline-flex',
-                                alignItems: 'center',
-                                gap: '0.5rem',
-                                textDecoration: 'none',
-                                textTransform: 'uppercase',
-                                letterSpacing: '0.2em',
-                            }}>
-                                <svg width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                                </svg>
-                                Palaces
-                            </Link>
+                            <div style={{ display: 'flex', gap: '1.5rem', marginBottom: '1rem' }}>
+                                <Link href="/dashboard" style={{
+                                    color: 'var(--stone-text-dim)',
+                                    fontSize: '0.65rem',
+                                    fontFamily: 'var(--font-mono)',
+                                    display: 'inline-flex',
+                                    alignItems: 'center',
+                                    gap: '0.5rem',
+                                    textDecoration: 'none',
+                                    textTransform: 'uppercase',
+                                    letterSpacing: '0.2em',
+                                }}>
+                                    <svg width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                                    </svg>
+                                    Palaces
+                                </Link>
+                                <Link href={`/dashboard/${palace.id}/blog`} style={{
+                                    color: 'var(--stone-text-dim)',
+                                    fontSize: '0.65rem',
+                                    fontFamily: 'var(--font-mono)',
+                                    display: 'inline-flex',
+                                    alignItems: 'center',
+                                    gap: '0.5rem',
+                                    textDecoration: 'none',
+                                    textTransform: 'uppercase',
+                                    letterSpacing: '0.2em',
+                                }}>
+                                    <svg width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2" />
+                                    </svg>
+                                    Blog
+                                </Link>
+                            </div>
                             <h1 style={{
                                 fontFamily: 'var(--font-display)',
                                 fontSize: 'clamp(2rem, 5vw, 3rem)',
