@@ -17,7 +17,7 @@ export async function GET() {
 
     let query = supabase
       .from('blog_posts')
-      .select('slug, title, subtitle, excerpt, author_persona, published_at, tags')
+      .select('slug, title, subtitle, excerpt, author_persona, published_at, tags, content')
       .eq('status', 'published')
       .order('published_at', { ascending: false })
       .limit(20)
@@ -40,10 +40,11 @@ export async function GET() {
       <pubDate>${new Date(post.published_at).toUTCString()}</pubDate>${
         (post.tags || []).map(t => `\n      <category>${escapeXml(t)}</category>`).join('')
       }
+      <content:encoded><![CDATA[${post.content || ''}]]></content:encoded>
     </item>`).join('\n')
 
     const rss = `<?xml version="1.0" encoding="UTF-8"?>
-<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/">
   <channel>
     <title>Memory Palace Blog</title>
     <link>${baseUrl}/blog</link>
