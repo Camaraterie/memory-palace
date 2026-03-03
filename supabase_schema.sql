@@ -45,7 +45,7 @@ CREATE INDEX idx_agents_palace_id ON agents(palace_id);
 -- Blog posts table
 CREATE TABLE blog_posts (
   id uuid DEFAULT gen_random_uuid() PRIMARY KEY,
-  palace_id uuid REFERENCES palaces(id) ON DELETE CASCADE,
+  palace_id text REFERENCES palaces(id) ON DELETE CASCADE,
   slug text UNIQUE NOT NULL,
   title text NOT NULL,
   subtitle text,
@@ -71,7 +71,7 @@ CREATE INDEX idx_blog_posts_palace_id ON blog_posts(palace_id);
 -- Personas table (scaffold)
 CREATE TABLE personas (
   id uuid DEFAULT gen_random_uuid() PRIMARY KEY,
-  palace_id uuid REFERENCES palaces(id) ON DELETE CASCADE,
+  palace_id text REFERENCES palaces(id) ON DELETE CASCADE,
   name text NOT NULL,
   role text NOT NULL,
   focus_areas text[] DEFAULT '{}',
