@@ -1,0 +1,28 @@
+import { createSupabaseAdmin } from '../../lib/supabase'
+import BlogClient from './BlogClient'
+
+export const revalidate = 60
+
+export const metadata = {
+  title: 'Blog — Memory Palace',
+  description: 'Updates from Memory Palace — infrastructure for AI recall.',
+}
+
+export default async function BlogPage() {
+  let posts = []
+  try {
+    const supabase = createSupabaseAdmin()
+    const { data, error } = await supabase
+      .from('blog_posts')
+      .select('id, slug, title, subtitle, excerpt, author_persona, cover_image, tags, published_at, created_at')
+      .eq('status', 'published')
+      .order('published_at', { ascending: false })
+      .limit(50)
+
+    if (!error && data) posts = data
+  } catch (e) {
+    console.error('Blog page fetch error:', e)
+  }
+
+  return <BlogClient posts={posts} />
+}

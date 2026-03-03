@@ -105,7 +105,7 @@ export default function Header() {
           <NavLink href="/faq" icon={<HelpIcon />}>FAQ</NavLink>
           <NavLink href="/troubleshoot" icon={<ToolIcon />}>Troubleshoot</NavLink>
           <NavLink href="/docs" icon={<BookIcon />}>Docs</NavLink>
-          <NavLink href="#" icon={<RssIcon />}>Blog</NavLink>
+          <NavLink href="/blog" icon={<RssIcon />}>Blog</NavLink>
         </div>
         
         <div style={{ width: '1px', height: '1.5rem', background: 'rgba(184, 134, 11, 0.2)', margin: '0 0.5rem' }}></div>
