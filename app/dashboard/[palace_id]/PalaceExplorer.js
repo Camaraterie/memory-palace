@@ -614,6 +614,7 @@ export default function PalaceExplorer({ palace, initialMemories }) {
                 <MemoryDetail
                     shortId={selectedMemory.short_id}
                     imageUrl={selectedMemory.image_url}
+                    palaceId={palace.id}
                     onClose={() => setSelectedMemory(null)}
                 />
             )}
@@ -621,9 +622,11 @@ export default function PalaceExplorer({ palace, initialMemories }) {
     )
 }
 
-function MemoryDetail({ shortId, imageUrl, onClose }) {
+function MemoryDetail({ shortId, imageUrl, palaceId, onClose }) {
     const [data, setData] = useState(null)
     const [loading, setLoading] = useState(true)
+    const [isDrafting, setIsDrafting] = useState(false)
+    const [draftStatus, setDraftStatus] = useState(null)
 
     useEffect(() => {
         const fetchData = async () => {
@@ -641,6 +644,70 @@ function MemoryDetail({ shortId, imageUrl, onClose }) {
         }
         fetchData()
     }, [shortId])
+
+    const handleDraftFromMemory = async () => {
+        if (!data || !data.payload) return
+        setIsDrafting(true)
+        setDraftStatus(null)
+
+        const payload = data.payload
+        const title = payload.session_name || 'Untitled Memory Session'
+        const slug = `draft-${shortId}-${Date.now()}`
+        
+        let content = `# ${title}\n\n`
+        if (payload.status) content += `**Status:** ${payload.status}\n\n`
+        
+        if (payload.built && payload.built.length > 0) {
+            content += `## What was built\n`
+            payload.built.forEach(item => content += `- ${item}\n`)
+            content += `\n`
+        }
+        
+        if (payload.decisions && payload.decisions.length > 0) {
+            content += `## Key Decisions\n`
+            payload.decisions.forEach(item => content += `- ${item}\n`)
+            content += `\n`
+        }
+        
+        if (payload.next_steps && payload.next_steps.length > 0) {
+            content += `## Next Steps\n`
+            payload.next_steps.forEach(item => content += `- ${item}\n`)
+            content += `\n`
+        }
+
+        try {
+            const res = await fetch('/api/blog/posts', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${palaceId}`,
+                },
+                body: JSON.stringify({
+                    slug,
+                    title,
+                    content,
+                    cover_image: imageUrl,
+                    tags: ['memory-draft'],
+                    source_memories: [shortId],
+                    status: 'draft',
+                    show_provenance: true
+                })
+            })
+            
+            const result = await res.json()
+            if (result.success) {
+                setDraftStatus('success')
+            } else {
+                setDraftStatus('error')
+                console.error(result.error)
+            }
+        } catch (err) {
+            console.error(err)
+            setDraftStatus('error')
+        } finally {
+            setIsDrafting(false)
+        }
+    }
 
     const payload = data?.payload || {}
 
@@ -730,6 +797,32 @@ function MemoryDetail({ shortId, imageUrl, onClose }) {
                             {loading ? 'Loading...' : (payload.session_name || 'Untitled Session')}
                         </h2>
                     </div>
+                    {!loading && (
+                        <div>
+                            <button
+                                onClick={handleDraftFromMemory}
+                                disabled={isDrafting || draftStatus === 'success'}
+                                style={{
+                                    padding: '0.5rem 1rem',
+                                    background: draftStatus === 'success' ? 'rgba(74,157,110,0.15)' : 'rgba(184,134,11,0.15)',
+                                    color: draftStatus === 'success' ? '#4a9d6e' : 'var(--brass)',
+                                    border: `1px solid ${draftStatus === 'success' ? 'rgba(74,157,110,0.3)' : 'rgba(184,134,11,0.3)'}`,
+                                    borderRadius: '4px',
+                                    fontFamily: 'var(--font-mono)',
+                                    fontSize: '0.75rem',
+                                    cursor: (isDrafting || draftStatus === 'success') ? 'not-allowed' : 'pointer',
+                                    opacity: isDrafting ? 0.7 : 1,
+                                    textTransform: 'uppercase',
+                                    letterSpacing: '0.1em',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '0.5rem',
+                                }}
+                            >
+                                {isDrafting ? 'Drafting...' : draftStatus === 'success' ? 'Draft Saved' : 'Draft Blog Post'}
+                            </button>
+                        </div>
+                    )}
                 </div>
 
                 <div style={{ flex: 1, overflowY: 'auto', padding: '2rem 2.5rem' }}>

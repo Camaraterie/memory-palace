@@ -1,5 +1,7 @@
 'use client'
 
+import { useState } from 'react'
+
 function formatDate(dateStr) {
   if (!dateStr) return ''
   const d = new Date(dateStr)
@@ -7,13 +9,27 @@ function formatDate(dateStr) {
 }
 
 export default function BlogClient({ posts }) {
+  const [searchQuery, setSearchQuery] = useState('')
+
+  const filteredPosts = posts.filter(post => {
+    if (!searchQuery) return true
+    const term = searchQuery.toLowerCase()
+    return (
+      (post.title && post.title.toLowerCase().includes(term)) ||
+      (post.subtitle && post.subtitle.toLowerCase().includes(term)) ||
+      (post.excerpt && post.excerpt.toLowerCase().includes(term)) ||
+      (post.tags && post.tags.some(tag => tag.toLowerCase().includes(term))) ||
+      (post.author_persona && post.author_persona.toLowerCase().includes(term))
+    )
+  })
+
   return (
     <div className="stone-surface" style={{ minHeight: '100vh', padding: '2rem' }}>
       <div style={{ maxWidth: 800, margin: '0 auto' }}>
 
         {/* Header */}
         <div style={{
-          marginBottom: '3rem',
+          marginBottom: '2rem',
           paddingBottom: '1.5rem',
           borderBottom: '1px solid rgba(184, 134, 11, 0.12)',
         }}>
@@ -48,19 +64,40 @@ export default function BlogClient({ posts }) {
           </p>
         </div>
 
+        {/* Search */}
+        <div style={{ marginBottom: '2rem' }}>
+          <input
+            type="text"
+            placeholder="Search posts by title, tags, or content..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            style={{
+              width: '100%',
+              padding: '0.75rem 1rem',
+              fontFamily: 'var(--font-mono)',
+              fontSize: '0.85rem',
+              color: 'var(--stone-text)',
+              background: 'rgba(26, 24, 20, 0.5)',
+              border: '1px solid rgba(184, 134, 11, 0.3)',
+              borderRadius: '6px',
+              outline: 'none',
+            }}
+          />
+        </div>
+
         {/* Posts */}
-        {posts.length === 0 ? (
+        {filteredPosts.length === 0 ? (
           <p style={{
             color: 'var(--stone-text-dim)',
             fontSize: '0.95rem',
             textAlign: 'center',
             padding: '3rem 0',
           }}>
-            No posts yet. Check back soon.
+            {searchQuery ? 'No posts found matching your search.' : 'No posts yet. Check back soon.'}
           </p>
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-            {posts.map((post) => (
+            {filteredPosts.map((post) => (
               <a
                 key={post.id}
                 href={`/blog/${post.slug}`}
