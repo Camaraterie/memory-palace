@@ -418,13 +418,64 @@
       ],
       "blockers": [],
       "prev": "b3s8k13",
+      "next": "y6ywyfu"
+    },
+    {
+      "id": "y6ywyfu",
+      "timestamp": "2026-03-03T12:00:00Z",
+      "agent": "claude-opus-4-6",
+      "room": "frontend",
+      "image_path": ".palace/memories/y6ywyfu.png",
+      "prompt_path": ".palace/prompts/y6ywyfu.txt",
+      "qr_url": "https://m.cuer.ai/q/y6ywyfu",
+      "short_id": "y6ywyfu",
+      "summary": "Blog Draft Review & Publishing Workflow — Guest key publish guard, draft listing API, publish/unpublish/reject endpoint, cover image upload, blog manager dashboard with live markdown preview, draft preview on public blog",
+      "outcome": "succeeded",
+      "repo": "https://github.com/Camaraterie/memory-palace.git",
+      "branch": "master",
+      "artifacts": [
+        {
+          "path": "app/api/blog/posts/route.js",
+          "description": "Guest key publish guard — 403 on status=published"
+        },
+        {
+          "path": "app/api/blog/drafts/route.js",
+          "description": "Palace-owner-only draft listing endpoint"
+        },
+        {
+          "path": "app/api/blog/posts/[slug]/publish/route.js",
+          "description": "Publish, unpublish, reject actions endpoint"
+        },
+        {
+          "path": "app/api/blog/upload-cover/route.js",
+          "description": "Cover image upload to Supabase storage"
+        },
+        {
+          "path": "app/dashboard/[palace_id]/blog/BlogManager.js",
+          "description": "Blog manager client component with filter, edit, preview, publish"
+        },
+        {
+          "path": "app/blog/[slug]/page.js",
+          "description": "Draft preview via ?preview=true with cookie auth"
+        }
+      ],
+      "next_steps": [
+        "Implement real login/auth flow (Google OAuth or magic link)",
+        "Add new post creation from dashboard",
+        "Push to master and deploy"
+      ],
+      "blockers": [
+        "No working login/auth flow — dashboard requires authentication but /login has no provider configured"
+      ],
+      "prev": "2od88mp",
       "next": null
     }
   ],
-  "total_memories": 11,
+  "total_memories": 12,
   "open_next_steps": [
-    "Visual QA across all page routes",
-    "Verify no serif remnants in browser DevTools"
+    "Implement real login/auth flow (Google OAuth or magic link)",
+    "Add new post creation from dashboard",
+    "Push to master and deploy"
   ],
   "repo": null,
   "agents_roster": [

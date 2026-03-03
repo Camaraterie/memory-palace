@@ -1,4 +1,4 @@
-import { login, signup } from './actions'
+import { login } from './actions'
 
 export default async function LoginPage({ searchParams }) {
     const params = await searchParams
@@ -99,13 +99,6 @@ export default async function LoginPage({ searchParams }) {
                             style={{ width: '100%' }}
                         >
                             Log in
-                        </button>
-                        <button
-                            formAction={signup}
-                            className="stone-btn"
-                            style={{ width: '100%' }}
-                        >
-                            Sign up
                         </button>
                     </div>
 
