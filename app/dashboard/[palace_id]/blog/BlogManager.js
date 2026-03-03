@@ -49,7 +49,7 @@ function Feedback({ message, type }) {
   )
 }
 
-export default function BlogManager({ palace, initialPosts }) {
+export default function BlogManager({ palace, initialPosts, memories }) {
   const [posts, setPosts] = useState(initialPosts)
   const [filter, setFilter] = useState('all')
   const [expandedSlug, setExpandedSlug] = useState(null)
@@ -57,7 +57,10 @@ export default function BlogManager({ palace, initialPosts }) {
   const [feedback, setFeedback] = useState({})
   const [confirmAction, setConfirmAction] = useState(null)
   const [saving, setSaving] = useState({})
+  const [memoryPickerSlug, setMemoryPickerSlug] = useState(null)
   const fileInputRef = useRef(null)
+
+  const memoriesWithImages = (memories || []).filter(m => m.image_url)
 
   const showFeedback = useCallback((slug, message, type = 'success') => {
     setFeedback(prev => ({ ...prev, [slug]: { message, type } }))
@@ -575,6 +578,21 @@ export default function BlogManager({ palace, initialPosts }) {
                             >
                               Upload
                             </button>
+                            {memoriesWithImages.length > 0 && (
+                              <button
+                                onClick={() => setMemoryPickerSlug(post.slug)}
+                                disabled={isSaving}
+                                style={{
+                                  ...btnBase,
+                                  background: 'rgba(184,134,11,0.1)',
+                                  border: '1px solid var(--brass-dim)',
+                                  color: 'var(--brass)',
+                                  flexShrink: 0,
+                                }}
+                              >
+                                Memories
+                              </button>
+                            )}
                           </div>
                           {data.cover_image && (
                             <div style={{
@@ -783,6 +801,142 @@ export default function BlogManager({ palace, initialPosts }) {
           })}
         </div>
       </div>
+
+      {/* Memory Image Picker Modal */}
+      {memoryPickerSlug && (
+        <div
+          onClick={() => setMemoryPickerSlug(null)}
+          style={{
+            position: 'fixed',
+            inset: 0,
+            zIndex: 50,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '2rem',
+            background: 'rgba(42,39,36,0.95)',
+            backdropFilter: 'blur(8px)',
+          }}
+        >
+          <div
+            onClick={e => e.stopPropagation()}
+            className="brass-frame-strong"
+            style={{
+              width: '100%',
+              maxWidth: '64rem',
+              maxHeight: '80vh',
+              overflow: 'hidden',
+              display: 'flex',
+              flexDirection: 'column',
+            }}
+          >
+            <div style={{
+              padding: '1.25rem 1.5rem',
+              borderBottom: '1px solid var(--brass-dim)',
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+            }}>
+              <div>
+                <div style={{
+                  fontSize: '0.625rem',
+                  fontFamily: 'var(--font-mono)',
+                  color: 'var(--brass)',
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.3em',
+                }}>
+                  Select Cover Image
+                </div>
+                <div style={{
+                  fontSize: '0.75rem',
+                  color: 'var(--stone-text-dim)',
+                  marginTop: '0.25rem',
+                }}>
+                  Choose a memory image to use as the blog post cover
+                </div>
+              </div>
+              <button
+                onClick={() => setMemoryPickerSlug(null)}
+                style={{
+                  padding: '0.5rem',
+                  color: 'var(--stone-text-dim)',
+                  background: 'none',
+                  border: 'none',
+                  cursor: 'pointer',
+                }}
+              >
+                <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            <div style={{
+              flex: 1,
+              overflowY: 'auto',
+              padding: '1.5rem',
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))',
+              gap: '1rem',
+              alignContent: 'start',
+            }}>
+              {memoriesWithImages.map(memory => (
+                <div
+                  key={memory.short_id}
+                  onClick={() => {
+                    updateField(memoryPickerSlug, 'cover_image', memory.image_url)
+                    setPosts(prev => prev.map(p =>
+                      p.slug === memoryPickerSlug ? { ...p, cover_image: memory.image_url } : p
+                    ))
+                    showFeedback(memoryPickerSlug, 'Cover image set from memory')
+                    setMemoryPickerSlug(null)
+                  }}
+                  style={{
+                    cursor: 'pointer',
+                    borderRadius: '8px',
+                    overflow: 'hidden',
+                    border: '1px solid rgba(184,134,11,0.15)',
+                    transition: 'all 0.2s',
+                    background: 'var(--stone-dark)',
+                  }}
+                >
+                  <div style={{ aspectRatio: '1', position: 'relative', overflow: 'hidden' }}>
+                    <img
+                      src={memory.image_url}
+                      alt={memory.session_name || memory.short_id}
+                      style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                    />
+                  </div>
+                  <div style={{ padding: '0.5rem 0.75rem' }}>
+                    <div style={{
+                      fontSize: '0.6rem',
+                      fontFamily: 'var(--font-mono)',
+                      color: 'var(--brass)',
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.1em',
+                      marginBottom: '0.2rem',
+                    }}>
+                      {memory.short_id} &middot; {memory.agent}
+                    </div>
+                    <div style={{
+                      fontSize: '0.75rem',
+                      color: 'var(--stone-text)',
+                      fontFamily: 'var(--font-display)',
+                      lineHeight: 1.3,
+                      display: '-webkit-box',
+                      WebkitLineClamp: 2,
+                      WebkitBoxOrient: 'vertical',
+                      overflow: 'hidden',
+                    }}>
+                      {memory.session_name || 'Untitled'}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
