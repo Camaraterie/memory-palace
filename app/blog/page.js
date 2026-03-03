@@ -14,7 +14,7 @@ export default async function BlogPage() {
     const supabase = createSupabaseAdmin()
     let query = supabase
       .from('blog_posts')
-      .select('id, slug, title, subtitle, excerpt, author_persona, cover_image, tags, published_at, created_at')
+      .select('id, slug, title, subtitle, excerpt, author_persona, cover_image, tags, published_at, created_at, palace_id')
       .eq('status', 'published')
       .order('published_at', { ascending: false })
       .limit(50)
