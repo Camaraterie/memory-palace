@@ -53,7 +53,7 @@ export async function GET(request) {
         if (shortId) {
             const { data: mem, error } = await supabase
                 .from('memories')
-                .select('short_id, agent, image_url, ciphertext, signature, algorithm, created_at')
+                .select('short_id, agent, image_url, ciphertext, signature, algorithm, personas, created_at')
                 .eq('short_id', shortId)
                 .eq('palace_id', auth.palace_id)
                 .single()
@@ -74,11 +74,18 @@ export async function GET(request) {
 
         const limitParam = parseInt(searchParams.get('limit') || '10')
         const limit = limitParam > 50 ? 50 : limitParam
+        const personaFilter = searchParams.get('persona')
 
-        const { data: memories, error } = await supabase
+        let query = supabase
             .from('memories')
-            .select('short_id, agent, image_url, ciphertext, signature, algorithm, created_at')
+            .select('short_id, agent, image_url, ciphertext, signature, algorithm, personas, created_at')
             .eq('palace_id', auth.palace_id)
+
+        if (personaFilter) {
+            query = query.contains('personas', [personaFilter])
+        }
+
+        const { data: memories, error } = await query
             .order('created_at', { ascending: false })
             .limit(limit)
 
