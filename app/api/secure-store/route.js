@@ -105,6 +105,10 @@ export async function POST(request) {
             return NextResponse.json({ error: 'Payload does not conform to required strict JSON schema.' }, { status: 422 })
         }
 
+        if (!ciphertext || ciphertext === 'stored-via-production') {
+             return NextResponse.json({ error: 'secure-store requires valid ciphertext.' }, { status: 400 })
+        }
+
         // Scan for Prompt Injection
         const san = scanPayload(payload)
         if (!san.clean) {
@@ -150,12 +154,13 @@ export async function POST(request) {
             session_name: payload.session_name || 'Untitled',
             character_name: payload.agent || 'AGENT',
             image_url: body.image_url || null,
-            personas: body.personas || null,
-            // Force plaintext storage on the default /store endpoint
-            // Encrypted payloads should use /secure-store instead
-            ciphertext: JSON.stringify(payload),
-            signature: null,
-            algorithm: 'plaintext'
+            // If no real ciphertext provided, store the payload as JSON so agents
+            // can recover session context without encryption keys via /q/<id>
+            ciphertext: (ciphertext && ciphertext !== 'stored-via-production')
+                ? (iv ? `${iv}:${ciphertext}` : ciphertext)
+                : JSON.stringify(payload),
+            signature: signature || null,
+            algorithm: algorithm || 'HMAC-SHA256'
         }
 
         const { error: insertError } = await supabase
