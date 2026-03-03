@@ -45,7 +45,6 @@ export default function PostClient({ post }) {
               marginTop: '1rem',
               borderRadius: '6px',
               overflow: 'hidden',
-              aspectRatio: '16/7',
               background: 'rgba(26, 24, 20, 0.5)',
             }}>
               <img
@@ -53,8 +52,8 @@ export default function PostClient({ post }) {
                 alt=""
                 style={{
                   width: '100%',
-                  height: '100%',
-                  objectFit: 'cover',
+                  height: 'auto',
+                  display: 'block',
                 }}
               />
             </div>
