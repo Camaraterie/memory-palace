@@ -1273,6 +1273,53 @@ DELETE /api/agents  { "agent_name": "chatgpt" }                          → rev
 
 Permissions: `read` (recall only), `write` (recall + store), `admin` (full access).
 
+### GET /api/blog/posts — List published blog posts (no auth)
+
+```
+GET https://m.cuer.ai/api/blog/posts
+GET https://m.cuer.ai/api/blog/posts?tag=launch&limit=10&offset=0
+```
+
+Returns `{ posts: [...], total }`. Each post includes `slug`, `title`, `subtitle`, `excerpt`, `author_persona`, `cover_image`, `tags`, `published_at`.
+
+### GET /api/blog/posts/:slug — Single blog post (no auth)
+
+```
+GET https://m.cuer.ai/api/blog/posts/memory-palace-launch
+```
+
+Returns `{ success, post }` with full `content` (markdown), `social_variants`, `source_memories`, and all metadata.
+
+### POST /api/blog/posts — Create or update a blog post (auth required)
+
+Auth: `Bearer <palace_id>` or `Bearer gk_<guest_key>` (requires write or admin permission).
+
+```json
+{
+  "slug": "my-post",
+  "title": "Post Title",
+  "content": "Markdown content...",
+  "subtitle": "Optional subtitle",
+  "excerpt": "Optional excerpt",
+  "author_persona": "curator",
+  "status": "published",
+  "tags": ["tag1", "tag2"],
+  "source_memories": ["abc1234"],
+  "show_provenance": true,
+  "social_variants": { "twitter": "Tweet text", "linkedin": "LinkedIn text" }
+}
+```
+
+If the slug already exists for the same palace, the post is updated. Auto-sets `published_at` when status changes to `published`. Returns `{ success, post }`.
+
+### GET /api/blog/feed — RSS 2.0 feed (no auth)
+
+```
+GET https://m.cuer.ai/api/blog/feed
+```
+
+Returns RSS 2.0 XML with the 20 most recent published posts. Content-Type: `application/rss+xml`.
+
 ### POST /api/scan/verify — Decode QR code (lightweight, no DB lookup)
 
 ```
