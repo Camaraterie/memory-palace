@@ -613,6 +613,7 @@ export default function PalaceExplorer({ palace, initialMemories }) {
             {selectedMemory && (
                 <MemoryDetail
                     shortId={selectedMemory.short_id}
+                    imageUrl={selectedMemory.image_url}
                     onClose={() => setSelectedMemory(null)}
                 />
             )}
@@ -620,7 +621,7 @@ export default function PalaceExplorer({ palace, initialMemories }) {
     )
 }
 
-function MemoryDetail({ shortId, onClose }) {
+function MemoryDetail({ shortId, imageUrl, onClose }) {
     const [data, setData] = useState(null)
     const [loading, setLoading] = useState(true)
 
@@ -764,8 +765,8 @@ function MemoryDetail({ shortId, onClose }) {
                                     boxShadow: '0 4px 20px rgba(0,0,0,0.3)',
                                     maxHeight: 400,
                                 }}>
-                                    {payload.image_url ? (
-                                        <Image src={payload.image_url} alt="" fill style={{ objectFit: 'cover' }} />
+                                    {imageUrl ? (
+                                        <Image src={imageUrl} alt="" fill style={{ objectFit: 'cover' }} />
                                     ) : (
                                         <div style={{
                                             position: 'absolute',

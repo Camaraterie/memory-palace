@@ -599,10 +599,10 @@ export default function BlogManager({ palace, initialPosts, memories }) {
                               marginTop: '0.5rem',
                               borderRadius: '4px',
                               overflow: 'hidden',
-                              maxHeight: '120px',
                               border: '1px solid rgba(184,134,11,0.1)',
+                              background: 'var(--stone-dark)',
                             }}>
-                              <img src={data.cover_image} alt="" style={{ width: '100%', height: '120px', objectFit: 'cover' }} />
+                              <img src={data.cover_image} alt="" style={{ width: '100%', height: 'auto', display: 'block' }} />
                             </div>
                           )}
                         </div>
@@ -659,10 +659,10 @@ export default function BlogManager({ palace, initialPosts, memories }) {
                           <div style={{
                             borderRadius: '4px',
                             overflow: 'hidden',
-                            aspectRatio: '16/7',
                             marginBottom: '1rem',
+                            background: 'var(--stone-dark)',
                           }}>
-                            <img src={data.cover_image} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                            <img src={data.cover_image} alt="" style={{ width: '100%', height: 'auto', display: 'block' }} />
                           </div>
                         )}
 
