@@ -85,6 +85,44 @@ export default async function BlogPostPage({ params, searchParams }) {
 
       if (!error && data) post = data
     }
+
+    if (post) {
+      let queryAll = supabase
+        .from('blog_posts')
+        .select('slug, title, tags, source_memories, published_at')
+        .eq('status', 'published')
+        .order('published_at', { ascending: false })
+      
+      if (process.env.BLOG_HOME_PALACE_ID) {
+        queryAll = queryAll.eq('palace_id', process.env.BLOG_HOME_PALACE_ID)
+      }
+
+      const { data: all_posts } = await queryAll
+      
+      if (all_posts) {
+        const currentIndex = all_posts.findIndex(p => p.slug === slug)
+        if (currentIndex > -1) {
+          post.nextPost = currentIndex > 0 ? all_posts[currentIndex - 1] : null
+          post.prevPost = currentIndex < all_posts.length - 1 ? all_posts[currentIndex + 1] : null
+        }
+
+        post.relatedPosts = all_posts
+          .filter(p => p.slug !== slug)
+          .map(p => {
+            let score = 0
+            if (post.tags && p.tags) {
+              score += p.tags.filter(t => post.tags.includes(t)).length
+            }
+            if (post.source_memories && p.source_memories) {
+              score += p.source_memories.filter(m => post.source_memories.includes(m)).length * 2
+            }
+            return { ...p, score }
+          })
+          .filter(p => p.score > 0)
+          .sort((a, b) => b.score - a.score)
+          .slice(0, 3)
+      }
+    }
   } catch (e) {
     console.error('Blog post fetch error:', e)
   }
