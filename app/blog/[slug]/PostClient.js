@@ -247,6 +247,74 @@ export default function PostClient({ post }) {
           </div>
         )}
 
+        {/* Related Posts */}
+        {post.relatedPosts && post.relatedPosts.length > 0 && (
+          <div style={{
+            marginTop: '3rem',
+            paddingTop: '1.5rem',
+            borderTop: '1px solid rgba(184, 134, 11, 0.1)',
+          }}>
+            <h3 style={{
+              fontFamily: 'var(--font-mono)',
+              fontSize: '0.85rem',
+              fontWeight: 600,
+              color: 'var(--brass)',
+              textTransform: 'uppercase',
+              letterSpacing: '0.08em',
+              marginBottom: '1rem',
+            }}>
+              Related Posts
+            </h3>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+              {post.relatedPosts.map(related => (
+                <a key={related.slug} href={`/blog/${related.slug}`} style={{
+                  textDecoration: 'none',
+                  color: 'var(--stone-text)',
+                  padding: '1rem',
+                  background: 'rgba(26, 24, 20, 0.5)',
+                  border: '1px solid rgba(184, 134, 11, 0.15)',
+                  borderRadius: '6px',
+                  display: 'block'
+                }}>
+                  <div style={{ fontSize: '1.1rem', fontWeight: 600, marginBottom: '0.5rem' }}>{related.title}</div>
+                  <div style={{ fontSize: '0.8rem', color: 'var(--stone-text-dim)', fontFamily: 'var(--font-mono)' }}>
+                    {formatDate(related.published_at)}
+                  </div>
+                </a>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Navigation */}
+        {(post.prevPost || post.nextPost) && (
+          <div style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            gap: '1rem',
+            marginTop: '3rem',
+            paddingTop: '1.5rem',
+            borderTop: '1px solid rgba(184, 134, 11, 0.1)',
+          }}>
+            <div style={{ flex: 1 }}>
+              {post.prevPost && (
+                <a href={`/blog/${post.prevPost.slug}`} style={{ textDecoration: 'none' }}>
+                  <div style={{ fontSize: '0.75rem', fontFamily: 'var(--font-mono)', color: 'var(--brass-dim)', marginBottom: '0.25rem' }}>&larr; Previous</div>
+                  <div style={{ color: 'var(--stone-text)', fontWeight: 600 }}>{post.prevPost.title}</div>
+                </a>
+              )}
+            </div>
+            <div style={{ flex: 1, textAlign: 'right' }}>
+              {post.nextPost && (
+                <a href={`/blog/${post.nextPost.slug}`} style={{ textDecoration: 'none' }}>
+                  <div style={{ fontSize: '0.75rem', fontFamily: 'var(--font-mono)', color: 'var(--brass-dim)', marginBottom: '0.25rem' }}>Next &rarr;</div>
+                  <div style={{ color: 'var(--stone-text)', fontWeight: 600 }}>{post.nextPost.title}</div>
+                </a>
+              )}
+            </div>
+          </div>
+        )}
+
         {/* Footer */}
         <div style={{
           marginTop: '3rem',
