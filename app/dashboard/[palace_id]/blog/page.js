@@ -30,5 +30,13 @@ export default async function BlogDashboardPage({ params }) {
     .eq('palace_id', palace_id)
     .order('updated_at', { ascending: false })
 
-  return <BlogManager palace={palace} initialPosts={posts || []} />
+  // Fetch memories with images for the cover image picker
+  const { data: memories } = await supabase
+    .from('memories')
+    .select('short_id, agent, session_name, image_url, created_at')
+    .eq('palace_id', palace_id)
+    .not('image_url', 'is', null)
+    .order('created_at', { ascending: false })
+
+  return <BlogManager palace={palace} initialPosts={posts || []} memories={memories || []} />
 }
