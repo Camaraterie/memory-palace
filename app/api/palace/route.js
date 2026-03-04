@@ -70,12 +70,26 @@ export async function GET(request) {
             .eq('active', true)
 
         // Fetch recent memory chain (last 20) — include ciphertext for plaintext memory parsing
-        const { data: chainMems } = await supabase
+        // Try with personas column first (post-migration)
+        let { data: chainMems, error: memsError } = await supabase
             .from('memories')
             .select('short_id, agent, session_name, created_at, ciphertext, image_url, personas')
             .eq('palace_id', auth.palace_id)
             .order('created_at', { ascending: false })
             .limit(20)
+
+        // If it fails (likely due to missing personas column before migration), fallback to query without it
+        if (memsError) {
+            console.warn('Memory fetch with personas failed, falling back to legacy schema', memsError)
+            const fallback = await supabase
+                .from('memories')
+                .select('short_id, agent, session_name, created_at, ciphertext, image_url')
+                .eq('palace_id', auth.palace_id)
+                .order('created_at', { ascending: false })
+                .limit(20)
+            
+            chainMems = fallback.data
+        }
 
         // Parse rooms/next_steps/repo from plaintext memories
         let rooms = null
