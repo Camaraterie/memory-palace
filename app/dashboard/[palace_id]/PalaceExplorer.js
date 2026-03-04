@@ -33,7 +33,9 @@ export default function PalaceExplorer({ palace, initialMemories }) {
     }, [palace.id])
 
     // Merge initial server-side memories with live API data if available
-    const allMemories = palaceData?.chain || initialMemories?.map(m => ({
+    // Fix: Only override with live data if it actually contains memories.
+    // If the live fetch fails or returns empty (e.g. pending DB migrations), fallback to initialMemories.
+    const allMemories = (palaceData?.chain?.length > 0 ? palaceData.chain : null) || initialMemories?.map(m => ({
         short_id: m.short_id,
         agent: m.agent,
         summary: m.session_name,
