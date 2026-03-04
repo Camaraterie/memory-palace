@@ -224,6 +224,28 @@ export default function BlogManager({ palace, initialPosts, memories }) {
     }
   }
 
+  const handleRevise = (slug) => {
+    const data = editData[slug]
+    const prompt = `I need help revising this blog post draft. I want to make it an actual compelling blog post, rather than just a dev log. 
+Can you act as a writing partner? We should talk conversationally to refine it, focusing on the "WHY" (e.g., why are we building this, what is the purpose), establishing the tone, and incorporating the characters.
+
+Here is the current draft:
+---
+TITLE: ${data.title}
+SUBTITLE: ${data.subtitle || ''}
+
+${data.content}
+---
+
+Please start by asking me a few questions about the purpose, audience, and the story we want to tell.`
+
+    navigator.clipboard.writeText(prompt).then(() => {
+      showFeedback(slug, 'Revision prompt copied to clipboard!')
+    }).catch(err => {
+      showFeedback(slug, 'Failed to copy prompt', 'error')
+    })
+  }
+
   const inputStyle = {
     width: '100%',
     padding: '0.5rem 0.75rem',
@@ -716,6 +738,20 @@ export default function BlogManager({ palace, initialPosts, memories }) {
                         }}
                       >
                         {isSaving ? 'Saving...' : 'Save Draft'}
+                      </button>
+
+                      <button
+                        onClick={() => handleRevise(post.slug)}
+                        disabled={isSaving}
+                        style={{
+                          ...btnBase,
+                          background: 'rgba(74,127,217,0.15)',
+                          color: 'var(--teal)',
+                          border: '1px solid rgba(74,127,217,0.3)',
+                          opacity: isSaving ? 0.5 : 1,
+                        }}
+                      >
+                        Revise with Agent
                       </button>
 
                       <button
