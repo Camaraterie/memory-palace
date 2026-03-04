@@ -1,5 +1,20 @@
 # Persona System & Meta-Blogging Agent
 
+## Agent Instructions & Protocols
+
+**MEMORY STORAGE FORMAT:**
+When storing memories for this project, you **MUST** use the 3x3 comic strip format:
+- 9 equal SQUARE panels (`3x3 grid` or `3×3 grid`)
+- Each panel must be labeled explicitly (`TOP-LEFT PANEL`, `MIDDLE-CENTER PANEL`, etc.)
+- Use your specific persona's visual characteristics in the character portrait
+- Include whiteboard panels with structured session data
+- Include a workbench panel with artifact descriptions
+- Include a roster panel with the agent team
+- Include the data matrix panel with the QR code at the bottom-right
+- Reference existing prompts as examples (e.g., `.palace/prompts/y6ywyfu.txt`)
+
+*Run `mempalace prompt-template` to get a ready-to-use template.*
+
 ## Overview
 
 Two interconnected features:
