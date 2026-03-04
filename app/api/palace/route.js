@@ -72,7 +72,7 @@ export async function GET(request) {
         // Fetch recent memory chain (last 20) — include ciphertext for plaintext memory parsing
         const { data: chainMems } = await supabase
             .from('memories')
-            .select('short_id, agent, session_name, created_at, ciphertext, image_url')
+            .select('short_id, agent, session_name, created_at, ciphertext, image_url, personas')
             .eq('palace_id', auth.palace_id)
             .order('created_at', { ascending: false })
             .limit(20)
@@ -111,6 +111,7 @@ export async function GET(request) {
                 room,
                 created_at: mem.created_at,
                 image_url: mem.image_url || null,
+                personas: mem.personas || null,
                 capsule_url: `https://m.cuer.ai/q/${mem.short_id}`,
             }
         })

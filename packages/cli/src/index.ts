@@ -10,6 +10,7 @@ import { shareMemory } from './share';
 import { attachImage } from './attach';
 import { generateCommand } from './generate';
 import { storeCommand } from './store-command';
+import { generatePromptTemplateCommand } from './generate-prompt';
 
 const program = new Command();
 
@@ -35,9 +36,10 @@ program
 
 program
     .command('save <json_file>')
-    .description('Encrypt, sign and store')
-    .action(async (json_file) => {
-        await saveMemoryCommand(json_file);
+    .description('Store a memory payload (defaults to plaintext HTML. Use --secure for encrypted JSON only)')
+    .option('--secure', 'Encrypt payload locally before sending')
+    .action(async (json_file, options) => {
+        await saveMemoryCommand(json_file, options.secure);
     });
 
 program
@@ -116,10 +118,18 @@ program
     });
 
 program
+    .command('prompt-template')
+    .description('Print the required 3x3 grid memory prompt template')
+    .action(async () => {
+        await generatePromptTemplateCommand();
+    });
+
+program
     .command('store <prompt_file> <payload_json>')
     .description('Save memory + generate image in one shot (prompt_file: .txt, payload_json: JSON)')
-    .action(async (prompt_file, payload_json) => {
-        await storeCommand(prompt_file, payload_json);
+    .option('--secure', 'Encrypt payload locally before sending')
+    .action(async (prompt_file, payload_json, options) => {
+        await storeCommand(prompt_file, payload_json, options.secure);
     });
 
 program

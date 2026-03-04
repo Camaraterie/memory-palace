@@ -72,10 +72,11 @@ export async function POST(req) {
 
     // Modify memories table
     await client.query(`
-            ALTER TABLE memories 
+            ALTER TABLE memories
             ADD COLUMN IF NOT EXISTS ciphertext text,
             ADD COLUMN IF NOT EXISTS signature text,
-            ADD COLUMN IF NOT EXISTS algorithm text DEFAULT 'HMAC-SHA256';
+            ADD COLUMN IF NOT EXISTS algorithm text DEFAULT 'HMAC-SHA256',
+            ADD COLUMN IF NOT EXISTS personas text[];
         `);
 
     // Drop old columns from memories
@@ -186,6 +187,9 @@ export async function POST(req) {
       END
       $$;
     `)
+
+    // Add visual_prompt to personas table
+    await client.query(`ALTER TABLE personas ADD COLUMN IF NOT EXISTS visual_prompt text;`)
 
     await client.query("NOTIFY pgrst, 'reload schema';")
 
