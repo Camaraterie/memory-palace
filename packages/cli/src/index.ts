@@ -10,6 +10,7 @@ import { shareMemory } from './share';
 import { attachImage } from './attach';
 import { generateCommand } from './generate';
 import { storeCommand } from './store-command';
+import { generatePromptTemplateCommand } from './generate-prompt';
 
 const program = new Command();
 
@@ -114,6 +115,13 @@ program
     .description('Generate a memory image via Gemini API and upload to Supabase')
     .action(async (prompt_file, short_id) => {
         await generateCommand(prompt_file, short_id);
+    });
+
+program
+    .command('prompt-template')
+    .description('Print the required 3x3 grid memory prompt template')
+    .action(async () => {
+        await generatePromptTemplateCommand();
     });
 
 program
