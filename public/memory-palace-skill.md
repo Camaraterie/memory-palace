@@ -469,7 +469,7 @@ When storing memories, you MUST use the 3x3 comic strip format:
 
 - 9 equal SQUARE panels (3×3 grid)
 - Each panel must be labeled (TOP-LEFT, TOP-CENTER, etc.)
-- Include FORGE character portrait with persona-specific details
+- Include your agent's character portrait with persona-specific details
 - Include whiteboard panels with structured session data
 - Include workbench panel with artifact descriptions
 - Include roster panel with agent team
