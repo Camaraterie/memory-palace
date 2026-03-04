@@ -153,7 +153,7 @@ mempalace store .palace/prompts/mem-NNN.txt /tmp/mem-NNN-payload.json
 This single command:
 1. Encrypts and stores the JSON payload → gets short_id
 2. Fetches the QR PNG for that short_id
-3. Calls `gemini-3.1-flash-image-preview` with the prompt + QR as reference image
+3. Calls `gemini-3.1-flash-image-preview` with the prompt + QR as reference image (via the /generateContent endpoint using the standard JSON payload structure).
 4. Saves the image to `.palace/memories/<short_id>.png`
 5. Uploads to Supabase storage
 
