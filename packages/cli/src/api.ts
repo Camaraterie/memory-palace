@@ -24,14 +24,8 @@ export async function getMemories(authToken: string, limit: number = 10): Promis
 }
 
 export async function storeMemory(config: Config, payload: any, imageUrl?: string) {
-    const { ciphertext, iv, authTag } = encryptPayload(config.palace_key, config.palace_id, payload);
-    const signature = signPayload(config.palace_key, payload);
-
     const body = {
-        payload, // plaintext sent for schema validation & prompt injection scanning
-        ciphertext: `${iv}:${authTag}:${ciphertext}`,
-        signature,
-        algorithm: 'Ed25519',
+        payload, // Always send plaintext for the default store
         image_url: imageUrl
     };
 
@@ -48,6 +42,35 @@ export async function storeMemory(config: Config, payload: any, imageUrl?: strin
 
     if (!res.ok) {
         throw new Error(`Failed to store: ${res.status} ${await res.text()}`);
+    }
+    return await res.json();
+}
+
+export async function secureStoreMemory(config: Config, payload: any, imageUrl?: string) {
+    const { ciphertext, iv, authTag } = encryptPayload(config.palace_key, config.palace_id, payload);
+    const signature = signPayload(config.palace_key, payload);
+
+    const body = {
+        payload, // plaintext sent for schema validation & prompt injection scanning
+        ciphertext: `${iv}:${authTag}:${ciphertext}`,
+        signature,
+        algorithm: 'Ed25519',
+        image_url: imageUrl
+    };
+
+    const authToken = config.guest_key || config.palace_id;
+
+    const res = await fetch(`${API_BASE}/api/secure-store`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${authToken}`
+        },
+        body: JSON.stringify(body)
+    });
+
+    if (!res.ok) {
+        throw new Error(`Failed to secure-store: ${res.status} ${await res.text()}`);
     }
     return await res.json();
 }

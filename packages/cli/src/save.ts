@@ -1,5 +1,5 @@
 import { getConfig, MemoryPayload } from './config';
-import { storeMemory } from './api';
+import { storeMemory, secureStoreMemory } from './api';
 import fs from 'fs';
 import os from 'os';
 import path from 'path';
@@ -10,8 +10,8 @@ export interface SaveResult {
     qr_path?: string;
 }
 
-/** Internal: encrypt, sign, and store a payload. Returns result without exiting. */
-export async function saveMemory(filePath: string): Promise<SaveResult> {
+/** Internal: encrypt (optional), sign, and store a payload. Returns result without exiting. */
+export async function saveMemory(filePath: string, secure: boolean = false): Promise<SaveResult> {
     const conf = getConfig();
     if (!fs.existsSync(filePath)) {
         throw new Error(`File not found: ${filePath}`);
@@ -20,8 +20,14 @@ export async function saveMemory(filePath: string): Promise<SaveResult> {
     const fileContent = fs.readFileSync(filePath, 'utf8');
     const payload: MemoryPayload = JSON.parse(fileContent);
 
-    console.log('  Encrypting and signing memory...');
-    const result: any = await storeMemory(conf, payload);
+    let result: any;
+    if (secure) {
+        console.log('  Encrypting and signing memory...');
+        result = await secureStoreMemory(conf, payload);
+    } else {
+        console.log('  Saving plaintext memory...');
+        result = await storeMemory(conf, payload);
+    }
 
     console.log(`✓ Memory stored — short_id: ${result.short_id}`);
     console.log(`  URL: ${result.short_url}`);
@@ -39,10 +45,10 @@ export async function saveMemory(filePath: string): Promise<SaveResult> {
     return { short_id: result.short_id, short_url: result.short_url, qr_path };
 }
 
-/** CLI entry point for `mempalace save <json_file>` */
-export async function saveMemoryCommand(filePath: string) {
+/** CLI entry point for `mempalace save <json_file> [--secure]` */
+export async function saveMemoryCommand(filePath: string, secure: boolean = false) {
     try {
-        await saveMemory(filePath);
+        await saveMemory(filePath, secure);
     } catch (e: any) {
         console.error('Save failed:', e.message);
         process.exit(1);
