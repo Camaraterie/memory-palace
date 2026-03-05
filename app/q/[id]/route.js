@@ -175,10 +175,12 @@ export async function GET(request, context) {
         // Content negotiation: browser gets HTML, agents get JSON
         const accept = request.headers.get('accept') || ''
         const wantsJson = accept.includes('application/json')
-        const isAgent = accept === '*/*' || accept === 'application/json'
+        const wantsHtml = accept.includes('text/html')
+        
+        // Serve HTML to browsers if they want HTML and didn't explicitly request JSON
+        const serveHtml = !wantsJson && wantsHtml && !encrypted;
 
-        // Serve HTML to browsers (unless explicitly requesting JSON)
-        if (!wantsJson && !isAgent && !encrypted && accept.includes('text/html')) {
+        if (serveHtml) {
             const html = renderHtml(shortId, memoryData, parsedPayload)
             return new NextResponse(html, {
                 headers: {
