@@ -25,37 +25,57 @@ function renderHtml(shortId, memoryData, parsedPayload) {
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
 <title>${title} — Memory Palace</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
-<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;600&family=JetBrains+Mono:wght@400&family=DM+Sans:wght@300;400;600&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=JetBrains+Mono:wght@400&display=swap" rel="stylesheet"/>
 <style>
+:root {
+  --stone-bg: #302c28;
+  --stone-dark: #2a2724;
+  --stone-text: #f0ede6;
+  --stone-text-dim: #b8b3a8;
+  --brass: #b8860b;
+  --brass-dim: #8b6914;
+}
 *{margin:0;padding:0;box-sizing:border-box}
-body{font-family:'DM Sans',system-ui,sans-serif;background:#302c28;color:#f0ede6;line-height:1.6;-webkit-font-smoothing:antialiased}
-body::before{content:'';position:fixed;inset:0;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.06'/%3E%3C/svg%3E");pointer-events:none;z-index:9999}
-.container{max-width:900px;margin:0 auto;padding:2rem 1.5rem}
-.header{padding:1rem 0 2rem;border-bottom:1px solid rgba(184,134,11,0.15);margin-bottom:2rem}
-.badge{font-family:'JetBrains Mono',monospace;font-size:0.65rem;letter-spacing:0.15em;text-transform:uppercase;color:#b8860b;margin-bottom:0.5rem}
-h1{font-family:'Cormorant Garamond',serif;font-size:clamp(1.5rem,4vw,2.5rem);font-weight:400;color:#f0ede6}
-.meta{display:flex;flex-wrap:wrap;gap:1rem;margin-top:1rem;font-size:0.8rem;color:#b8b3a8}
-.meta-item{font-family:'JetBrains Mono',monospace;font-size:0.7rem;text-transform:uppercase;letter-spacing:0.08em;padding:0.25rem 0.5rem;background:rgba(58,54,50,0.6);border:1px solid rgba(184,134,11,0.12);border-radius:4px}
-.outcome{color:${outcomeColor}}
-.image-frame{margin:2rem 0;border:2px solid #8b6914;border-radius:10px;overflow:hidden;box-shadow:inset 0 1px 0 rgba(212,160,23,0.15),0 4px 16px rgba(0,0,0,0.4)}
-.image-frame img{width:100%;display:block}
+body{font-family:'DM Sans',system-ui,sans-serif;background-color:var(--stone-bg);background-image:linear-gradient(180deg, var(--stone-dark) 0%, var(--stone-bg) 8%, var(--stone-bg) 92%, var(--stone-dark) 100%);color:var(--stone-text);line-height:1.6;-webkit-font-smoothing:antialiased;min-height:100vh}
+body::before{content:'';position:fixed;inset:0;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 512 512' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='1.2' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.015'/%3E%3C/svg%3E");background-size:512px 512px;pointer-events:none;z-index:9999}
+.container{max-width:800px;margin:0 auto;padding:2rem}
+.header{padding:1rem 0 2rem;border-bottom:1px solid rgba(184,134,11,0.12);margin-bottom:2rem}
+.home-link{color:var(--brass-dim);text-decoration:none;font-family:'JetBrains Mono',monospace;font-size:0.75rem;display:inline-flex;align-items:center;gap:0.4rem;margin-bottom:1.5rem}
+.badge{font-family:'JetBrains Mono',monospace;font-size:0.65rem;letter-spacing:0.15em;text-transform:uppercase;color:var(--brass);margin-bottom:0.75rem;display:flex;align-items:center;gap:0.75rem;flex-wrap:wrap}
+h1{font-family:'DM Sans',system-ui,sans-serif;font-size:clamp(2rem,5vw,3rem);font-weight:600;color:var(--stone-text);line-height:1.2}
+.meta{display:flex;flex-wrap:wrap;gap:0.75rem;margin-top:1.5rem;font-size:0.8rem;color:var(--stone-text-dim)}
+.meta-item{font-family:'JetBrains Mono',monospace;font-size:0.65rem;text-transform:uppercase;letter-spacing:0.08em;padding:0.25rem 0.5rem;background:rgba(58,54,50,0.6);border:1px solid rgba(184,134,11,0.12);border-radius:4px}
+.outcome{color:${outcomeColor};border-color:rgba(74,157,110,0.3);background:rgba(74,157,110,0.05)}
+.image-frame{margin:2rem 0;border:2px solid var(--brass-dim);border-radius:4px;overflow:hidden;box-shadow:0 2px 8px rgba(184,134,11,0.15);background:var(--stone-dark)}
+.image-frame img{width:100%;display:block;image-rendering:pixelated}
 .section{margin:2.5rem 0}
-.section-title{font-family:'JetBrains Mono',monospace;font-size:0.65rem;letter-spacing:0.15em;text-transform:uppercase;color:#b8860b;margin-bottom:1rem;display:flex;align-items:center;gap:0.75rem}
+.section-title{font-family:'JetBrains Mono',monospace;font-size:0.65rem;letter-spacing:0.15em;text-transform:uppercase;color:var(--brass);margin-bottom:1rem;display:flex;align-items:center;gap:0.75rem}
 .section-title::after{content:'';flex:1;height:1px;background:linear-gradient(90deg,rgba(184,134,11,0.2),transparent)}
-.tablet{background:linear-gradient(180deg,rgba(58,54,50,0.6),rgba(48,44,40,0.8));border:1px solid rgba(184,134,11,0.12);border-radius:6px;padding:1rem 1.25rem;margin-bottom:0.75rem;font-size:0.9rem;color:#b8b3a8;line-height:1.7}
+.stone-card{background:linear-gradient(135deg,rgba(58,54,50,0.8) 0%,rgba(42,39,36,0.9) 100%);border:1px solid rgba(184,134,11,0.15);border-radius:12px;padding:1.5rem;margin-bottom:1rem;box-shadow:inset 0 1px 0 rgba(255,255,255,0.03),0 2px 8px rgba(0,0,0,0.25)}
+.tablet{background:linear-gradient(180deg,rgba(58,54,50,0.6) 0%,rgba(48,44,40,0.8) 100%);border:1px solid rgba(184,134,11,0.12);border-radius:6px;padding:1rem 1.25rem;margin-bottom:0.75rem;font-size:0.9rem;color:var(--stone-text-dim);line-height:1.7;box-shadow:inset 0 2px 4px rgba(0,0,0,0.15),0 1px 0 rgba(255,255,255,0.02)}
 .tablet-list{display:flex;flex-direction:column;gap:0.5rem}
 .file-tag{display:inline-block;font-family:'JetBrains Mono',monospace;font-size:0.7rem;padding:0.15rem 0.5rem;background:rgba(74,127,217,0.08);border:1px solid rgba(74,127,217,0.15);border-radius:3px;color:#4a7fd9;margin:0.15rem}
 .blocker{background:rgba(217,74,74,0.06);border-color:rgba(217,74,74,0.15);color:#d94a4a}
-.context{font-family:'Cormorant Garamond',serif;font-size:1.15rem;font-style:italic;color:#b8b3a8;line-height:1.8}
-.footer{margin-top:3rem;padding-top:1.5rem;border-top:1px solid rgba(184,134,11,0.1);text-align:center;font-size:0.75rem;color:#b8b3a8}
-.footer a{color:#b8860b;text-decoration:none}
-.num{color:#b8860b;font-family:'JetBrains Mono',monospace;margin-right:0.75rem;font-size:0.8rem}
+.context{font-size:1rem;color:var(--stone-text-dim);line-height:1.7}
+.footer{margin-top:3rem;padding-top:1.5rem;border-top:1px solid rgba(184,134,11,0.1);text-align:center;font-size:0.85rem;color:var(--stone-text-dim)}
+.footer a{color:var(--brass);text-decoration:none}
+.num{color:var(--brass);font-family:'JetBrains Mono',monospace;margin-right:0.75rem;font-size:0.8rem}
 </style>
 </head>
 <body>
 <div class="container">
 <div class="header">
-<div class="badge">Memory Capsule &middot; ${shortId}</div>
+<a href="/" class="home-link">
+  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M15 18l-6-6 6-6" />
+  </svg>
+  m.cuer.ai
+</a>
+<div class="badge">
+  <span>Memory Capsule</span>
+  <span>&middot;</span>
+  <span>${shortId}</span>
+</div>
 <h1>${title}</h1>
 <div class="meta">
 <span class="meta-item">${agent}</span>
@@ -69,7 +89,9 @@ ${imageUrl ? `<div class="image-frame"><img src="${imageUrl}" alt="${title}"/></
 ${context ? `
 <div class="section">
 <div class="section-title">Narrative Context</div>
+<div class="stone-card">
 <p class="context">${context}</p>
+</div>
 </div>` : ''}
 
 ${built.length > 0 ? `
@@ -99,14 +121,14 @@ ${nextSteps.map((s, i) => `<div class="tablet"><span class="num">${(i + 1).toStr
 ${files.length > 0 ? `
 <div class="section">
 <div class="section-title">Modified Symbols</div>
-<div style="display:flex;flex-wrap:wrap;gap:0.25rem">
+<div style="display:flex;flex-wrap:wrap;gap:0.35rem">
 ${files.map(f => `<span class="file-tag">${f}</span>`).join('')}
 </div>
 </div>` : ''}
 
 ${blockers.length > 0 ? `
 <div class="section">
-<div class="section-title" style="color:#d94a4a">Critical Impasse</div>
+<div class="section-title" style="color:#d94a4a;border-color:rgba(217,74,74,0.2)">Critical Impasse</div>
 <div class="tablet-list">
 ${blockers.map(b => `<div class="tablet blocker">! ${b}</div>`).join('')}
 </div>
