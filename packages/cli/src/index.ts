@@ -2,7 +2,6 @@
 import { Command } from 'commander';
 import { initCommand } from './init';
 import { recoverMemory } from './recover';
-import { saveMemoryCommand } from './save';
 import { runMcpServer } from './mcp';
 import { authCommand } from './auth';
 import { inviteAgent, revokeAgent, listAgents } from './agents';
@@ -35,14 +34,6 @@ program
     .description('Recover context')
     .action(async (short_id) => {
         await recoverMemory(short_id);
-    });
-
-program
-    .command('save <json_file>')
-    .description('Store a memory payload (defaults to plaintext HTML. Use --secure for encrypted JSON only)')
-    .option('--secure', 'Encrypt payload locally before sending')
-    .action(async (json_file, options) => {
-        await saveMemoryCommand(json_file, options.secure);
     });
 
 program

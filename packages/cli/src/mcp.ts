@@ -40,7 +40,7 @@ export async function runMcpServer() {
                     }
                 },
                 {
-                    name: "save",
+                    name: "store",
                     description: "Encrypt, sign, and store a new session memory. Returns short_id and image_url if GEMINI_API_KEY is configured.",
                     inputSchema: {
                         type: "object",
@@ -149,7 +149,7 @@ export async function runMcpServer() {
                 return {
                     content: [{ type: "text", text: JSON.stringify(envelope, null, 2) }]
                 };
-            } else if (request.params.name === "save") {
+            } else if (request.params.name === "store") {
                 const args = request.params.arguments as any;
                 const metadata: any = {};
                 if (args.room) metadata.room = args.room;

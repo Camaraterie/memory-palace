@@ -140,7 +140,7 @@ npx mempalace <command>
 | Command | What it does |
 |---------|-------------|
 | `init` | Generate keys, register palace, save config to `~/.memorypalace/config.json` |
-| `save` | Encrypt + sign + store a memory payload. Returns `short_id`, `short_url`, and **QR code as base64 PNG** |
+| `store <prompt_file> <payload_json>` | **The canonical store command.** Generates image + stores memory in one shot. Always use this. |
 | `recover <short_id>` | Fetch, decrypt, verify signature. Returns a trust envelope |
 | `verify <short_id>` | Verify a memory's signature without decrypting |
 | `list` | List all stored memories |
@@ -173,7 +173,7 @@ This starts a stdio-based MCP server exposing these tools:
 
 | Tool | Description |
 |------|-------------|
-| `save` | Encrypt, sign, and store a session memory. Accepts `session_name`, `agent`, `status`, `outcome`, `built`, `decisions`, `next_steps`, `files`, `blockers`, `conversation_context`, `room` |
+| `store` | Generate image + store a session memory. Accepts `session_name`, `agent`, `status`, `outcome`, `built`, `decisions`, `next_steps`, `files`, `blockers`, `conversation_context`, `room` |
 | `recover` | Recover a signed, decrypted memory by `short_id`. Returns historical context only |
 | `palace_rooms` | List all rooms with intent, principles, and memory counts |
 | `palace_room_match` | Match file paths to rooms. **Use BEFORE modifying files** to read design constraints |
@@ -198,7 +198,7 @@ This starts a stdio-based MCP server exposing these tools:
 
 ### Which tool to use
 
-- **You have MCP support?** Use the `save` and `recover` MCP tools. They handle encryption and signing automatically.
+- **You have MCP support?** Use the `store` and `recover` MCP tools. They handle encryption and signing automatically.
 - **You have terminal access but no MCP?** Use the CLI commands directly.
 - **You have neither (e.g. ChatGPT web)?** Use the GET-based ingest endpoint. See **"Web Agent Access"** below. You only need a guest key (`gk_...`).
 - **Last resort only:** Raw `curl` calls to `https://m.cuer.ai/api/store` — you must handle encryption and signing yourself.
@@ -693,16 +693,14 @@ Use the CLI or MCP to store the memory. **Do not make raw API calls** unless you
 
 ```bash
 export MP_API_BASE=https://m.cuer.ai
-npx mempalace save \
-  --session "Session Name" \
-  --agent "your_agent_id" \
-  --status "One-line status" \
-  --outcome succeeded
+npx mempalace store <prompt_file.txt> <payload.json>
 ```
+
+Create `payload.json` with the session fields. Create `prompt_file.txt` from `npx mempalace prompt-template`, filled in with session details.
 
 **Option B — MCP tool (if available):**
 
-Call the `save` tool with the structured payload fields.
+Call the `store` tool with the structured payload fields.
 
 **Option C — Raw API (last resort):**
 
