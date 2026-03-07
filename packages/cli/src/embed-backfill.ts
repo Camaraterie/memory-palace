@@ -1,6 +1,7 @@
 import fetch from 'node-fetch';
 import { API_BASE, getConfig } from './config';
 import { generateEmbedding, buildDocumentText } from './embed';
+import { decryptPayload } from './crypto';
 
 export async function embedBackfillCommand(limit: number = 50) {
     const config = getConfig();
@@ -32,14 +33,25 @@ export async function embedBackfillCommand(limit: number = 50) {
 
     for (const memory of memories) {
         try {
-            // Parse the plaintext payload from ciphertext
+            // Parse payload — try plaintext JSON first, then decrypt
             let payload: any;
             try {
                 payload = JSON.parse(memory.ciphertext);
             } catch {
-                console.warn(`  [skip] ${memory.short_id} — could not parse ciphertext`);
-                skipped++;
-                continue;
+                // Try decrypting with palace_key (format: iv:authTag:ciphertext)
+                try {
+                    const parts = memory.ciphertext.split(':');
+                    if (parts.length >= 3) {
+                        const [iv, authTag, ...rest] = parts;
+                        payload = decryptPayload(config.palace_key, config.palace_id, rest.join(':'), iv, authTag);
+                    } else {
+                        throw new Error('unexpected format');
+                    }
+                } catch {
+                    console.warn(`  [skip] ${memory.short_id} — could not decrypt ciphertext`);
+                    skipped++;
+                    continue;
+                }
             }
 
             const text = buildDocumentText(payload);
