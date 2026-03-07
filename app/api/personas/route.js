@@ -12,23 +12,14 @@ export async function OPTIONS() {
 }
 
 async function resolvePalaceId(supabase, token) {
-  if (token.startsWith('gk_')) {
-    const { data: agent, error } = await supabase
-      .from('agents')
-      .select('palace_id, active')
-      .eq('guest_key', token)
-      .single()
-    if (error || !agent || !agent.active) return null
-    return agent.palace_id
-  } else {
-    const { data: palace, error } = await supabase
-      .from('palaces')
-      .select('id')
-      .eq('id', token)
-      .single()
-    if (error || !palace) return null
-    return palace.id
-  }
+  if (!token.startsWith('gk_')) return null
+  const { data: agent, error } = await supabase
+    .from('agents')
+    .select('palace_id, active')
+    .eq('guest_key', token)
+    .single()
+  if (error || !agent || !agent.active) return null
+  return agent.palace_id
 }
 
 // GET /api/personas — list personas (auth required)

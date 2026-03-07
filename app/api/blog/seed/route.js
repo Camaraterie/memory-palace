@@ -15,27 +15,18 @@ export async function POST(request) {
     const token = authHeader.split(' ')[1]
     let palaceId = null
 
-    if (token.startsWith('gk_')) {
-      const { data: agent, error } = await supabase
-        .from('agents')
-        .select('palace_id, permissions, active')
-        .eq('guest_key', token)
-        .single()
-      if (error || !agent || !agent.active || !['write', 'admin'].includes(agent.permissions)) {
-        return NextResponse.json({ error: 'Invalid or insufficient permissions' }, { status: 403 })
-      }
-      palaceId = agent.palace_id
-    } else {
-      const { data: palace, error } = await supabase
-        .from('palaces')
-        .select('id')
-        .eq('id', token)
-        .single()
-      if (error || !palace) {
-        return NextResponse.json({ error: 'Invalid palace_id' }, { status: 403 })
-      }
-      palaceId = palace.id
+    if (!token.startsWith('gk_')) {
+      return NextResponse.json({ error: 'Authorization required' }, { status: 403 })
     }
+    const { data: agent, error } = await supabase
+      .from('agents')
+      .select('palace_id, permissions, active')
+      .eq('guest_key', token)
+      .single()
+    if (error || !agent || !agent.active || !['write', 'admin'].includes(agent.permissions)) {
+      return NextResponse.json({ error: 'Invalid or insufficient permissions' }, { status: 403 })
+    }
+    palaceId = agent.palace_id
 
     const now = new Date().toISOString()
     const post = {

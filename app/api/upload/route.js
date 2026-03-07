@@ -12,15 +12,21 @@ export async function POST(request) {
         const supabase = createSupabaseAdmin()
 
         // Validate API key and get Palace
-        const { data: palaceData, error: palaceError } = await supabase
-            .from('palaces')
-            .select('id')
-            .eq('id', apiKey)
-            .single()
-
-        if (palaceError || !palaceData) {
+        if (!apiKey.startsWith('gk_')) {
             return NextResponse.json({ error: 'Invalid Palace API Key' }, { status: 401 })
         }
+        const { data: agentData, error: agentError } = await supabase
+            .from('agents')
+            .select('palace_id, permissions, active')
+            .eq('guest_key', apiKey)
+            .single()
+        if (agentError || !agentData || !agentData.active) {
+            return NextResponse.json({ error: 'Invalid Palace API Key' }, { status: 401 })
+        }
+        if (!['write', 'admin'].includes(agentData.permissions)) {
+            return NextResponse.json({ error: 'Insufficient permissions' }, { status: 403 })
+        }
+        const palaceData = { id: agentData.palace_id }
 
         // Get form data
         const formData = await request.formData()

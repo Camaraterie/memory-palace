@@ -33,7 +33,7 @@ export async function attachImage(shortId: string, imagePath: string) {
         return;
     }
 
-    const authToken = config.palace_id;
+    const authToken = config.guest_key || config.palace_id;
     const form = new FormData();
     form.append('image', fs.createReadStream(dest), { filename: `${shortId}.png`, contentType: 'image/png' });
     form.append('short_id', shortId);

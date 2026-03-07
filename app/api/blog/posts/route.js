@@ -62,31 +62,22 @@ export async function POST(request) {
     let palaceId = null
     let isOwner = false
 
-    if (token.startsWith('gk_')) {
-      const { data: agent, error } = await supabase
-        .from('agents')
-        .select('palace_id, permissions, active')
-        .eq('guest_key', token)
-        .single()
-      if (error || !agent || !agent.active) {
-        return NextResponse.json({ error: 'Invalid or inactive guest key' }, { status: 403, headers: CORS_HEADERS })
-      }
-      if (!['write', 'admin'].includes(agent.permissions)) {
-        return NextResponse.json({ error: 'Insufficient permissions' }, { status: 403, headers: CORS_HEADERS })
-      }
-      palaceId = agent.palace_id
-    } else {
-      const { data: palace, error } = await supabase
-        .from('palaces')
-        .select('id')
-        .eq('id', token)
-        .single()
-      if (error || !palace) {
-        return NextResponse.json({ error: 'Invalid palace_id' }, { status: 403, headers: CORS_HEADERS })
-      }
-      palaceId = palace.id
-      isOwner = true
+    if (!token.startsWith('gk_')) {
+      return NextResponse.json({ error: 'Authorization required' }, { status: 403, headers: CORS_HEADERS })
     }
+    const { data: agent, error } = await supabase
+      .from('agents')
+      .select('palace_id, permissions, active')
+      .eq('guest_key', token)
+      .single()
+    if (error || !agent || !agent.active) {
+      return NextResponse.json({ error: 'Invalid or inactive guest key' }, { status: 403, headers: CORS_HEADERS })
+    }
+    if (!['write', 'admin'].includes(agent.permissions)) {
+      return NextResponse.json({ error: 'Insufficient permissions' }, { status: 403, headers: CORS_HEADERS })
+    }
+    palaceId = agent.palace_id
+    if (agent.permissions === 'admin') isOwner = true
 
     const body = await request.json()
     const { slug, title, content, subtitle, excerpt, author_persona, cover_image, status, tags, source_memories, show_provenance, social_variants, metadata } = body

@@ -5,7 +5,7 @@ import { decryptPayload } from './crypto';
 
 export async function embedBackfillCommand(limit: number = 50) {
     const config = getConfig();
-    const authToken = config.palace_id;
+    const authToken = config.guest_key || config.palace_id;
 
     console.log(`Fetching up to ${limit} memories without embeddings...`);
 

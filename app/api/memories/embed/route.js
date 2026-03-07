@@ -12,16 +12,21 @@ export async function PATCH(request) {
         }
 
         const token = authHeader.split(' ')[1]
-        // Only palace_id auth (not guest keys) for backfill operations
-        const { data: palace, error: palaceError } = await supabase
-            .from('palaces')
-            .select('id')
-            .eq('id', token)
-            .single()
-
-        if (palaceError || !palace) {
-            return NextResponse.json({ error: 'Unauthorized — palace_id required' }, { status: 403 })
+        if (!token.startsWith('gk_')) {
+            return NextResponse.json({ error: 'Unauthorized — admin gk_ key required' }, { status: 403 })
         }
+        const { data: agentData, error: agentError } = await supabase
+            .from('agents')
+            .select('palace_id, permissions, active')
+            .eq('guest_key', token)
+            .single()
+        if (agentError || !agentData || !agentData.active) {
+            return NextResponse.json({ error: 'Unauthorized' }, { status: 403 })
+        }
+        if (agentData.permissions !== 'admin') {
+            return NextResponse.json({ error: 'Unauthorized — admin permission required' }, { status: 403 })
+        }
+        const palace = { id: agentData.palace_id }
 
         const body = await request.json()
         const { short_id, embedding } = body
@@ -67,15 +72,18 @@ export async function GET(request) {
         }
 
         const token = authHeader.split(' ')[1]
-        const { data: palace, error: palaceError } = await supabase
-            .from('palaces')
-            .select('id')
-            .eq('id', token)
-            .single()
-
-        if (palaceError || !palace) {
-            return NextResponse.json({ error: 'Unauthorized — palace_id required' }, { status: 403 })
+        if (!token.startsWith('gk_')) {
+            return NextResponse.json({ error: 'Unauthorized — admin gk_ key required' }, { status: 403 })
         }
+        const { data: agentData2, error: agentError2 } = await supabase
+            .from('agents')
+            .select('palace_id, permissions, active')
+            .eq('guest_key', token)
+            .single()
+        if (agentError2 || !agentData2 || !agentData2.active || agentData2.permissions !== 'admin') {
+            return NextResponse.json({ error: 'Unauthorized — admin permission required' }, { status: 403 })
+        }
+        const palace = { id: agentData2.palace_id }
 
         const { data, error } = await supabase
             .from('memories')

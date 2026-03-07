@@ -23,20 +23,24 @@ export async function GET(request) {
 
     const token = authHeader.split(' ')[1]
 
-    // Reject guest keys — owner only
-    if (token.startsWith('gk_')) {
-      return NextResponse.json({ error: 'Palace owner auth required. Guest keys cannot list drafts.' }, { status: 403, headers: CORS_HEADERS })
+    // Require admin gk_ — owner only
+    if (!token.startsWith('gk_')) {
+      return NextResponse.json({ error: 'Admin key required.' }, { status: 403, headers: CORS_HEADERS })
     }
 
-    const { data: palace, error: palaceError } = await supabase
-      .from('palaces')
-      .select('id')
-      .eq('id', token)
+    const { data: agent, error: agentError } = await supabase
+      .from('agents')
+      .select('palace_id, permissions, active')
+      .eq('guest_key', token)
       .single()
 
-    if (palaceError || !palace) {
-      return NextResponse.json({ error: 'Invalid palace_id' }, { status: 403, headers: CORS_HEADERS })
+    if (agentError || !agent || !agent.active) {
+      return NextResponse.json({ error: 'Invalid or inactive key' }, { status: 403, headers: CORS_HEADERS })
     }
+    if (agent.permissions !== 'admin') {
+      return NextResponse.json({ error: 'Admin permission required.' }, { status: 403, headers: CORS_HEADERS })
+    }
+    const palace = { id: agent.palace_id }
 
     const { data: drafts, error } = await supabase
       .from('blog_posts')
