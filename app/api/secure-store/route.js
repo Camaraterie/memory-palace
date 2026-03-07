@@ -160,7 +160,8 @@ export async function POST(request) {
                 ? (iv ? `${iv}:${ciphertext}` : ciphertext)
                 : JSON.stringify(payload),
             signature: signature || null,
-            algorithm: algorithm || 'HMAC-SHA256'
+            algorithm: algorithm || 'HMAC-SHA256',
+            room_slug: payload.metadata?.room || null,
         }
 
         const { error: insertError } = await supabase

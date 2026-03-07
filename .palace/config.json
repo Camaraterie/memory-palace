@@ -7,5 +7,8 @@
     "qr_base_url": "http://localhost:3000",
     "qr_api_key_env": "CUER_API_KEY",
     "qr_fallback": "local",
-    "qr_link_target": "prompt"
+    "qr_link_target": "prompt",
+    "embedding_api": "http://192.168.86.30:1234/v1/embeddings",
+    "embedding_model": "text-embedding-nomic-embed-text-v1.5@f32",
+    "embedding_dimensions": 768
 }

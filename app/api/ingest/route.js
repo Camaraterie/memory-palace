@@ -190,6 +190,7 @@ export async function GET(request) {
             ciphertext: JSON.stringify(payload),
             signature: null,
             algorithm: 'plaintext',
+            room_slug: payload.metadata?.room || null,
         }
 
         const { error: insertError } = await supabase
