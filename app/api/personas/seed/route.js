@@ -77,12 +77,12 @@ export async function POST(request) {
     if (!token.startsWith('gk_')) {
       return NextResponse.json({ error: 'Authorization required' }, { status: 403, headers: CORS_HEADERS })
     }
-    const { data: agent, error } = await supabase
+    const { data: agent, error: agentError } = await supabase
       .from('agents')
       .select('palace_id, active')
       .eq('guest_key', token)
       .single()
-    if (error || !agent || !agent.active) {
+    if (agentError || !agent || !agent.active) {
       return NextResponse.json({ error: 'Invalid or inactive guest key' }, { status: 403, headers: CORS_HEADERS })
     }
     palaceId = agent.palace_id
