@@ -1,0 +1,67 @@
+{
+  "session_name": "Rooms + Embeddings — Full Implementation & Debug",
+  "agent": "claude-sonnet-4-6",
+  "status": "complete",
+  "outcome": "succeeded",
+  "built": [
+    "rooms table with intent, principles, decisions, file_patterns (pgvector migration)",
+    "embedding vector(768) + HNSW index on memories",
+    "POST/GET /api/rooms — upsert and list rooms",
+    "GET /api/rooms/[slug] — single room with linked memories",
+    "GET /api/rooms/match — file-to-room matching via picomatch",
+    "POST /api/search — semantic (pgvector RPC) + keyword fallback",
+    "PATCH/GET /api/memories/embed — embedding backfill endpoint",
+    "packages/cli/src/embed.ts — LM Studio embedding client with graceful degradation",
+    "packages/cli/src/embed-backfill.ts — decrypts HMAC-SHA256/Ed25519 memories then embeds",
+    "packages/cli/src/rooms.ts + search.ts — CLI room and search commands",
+    "4 new MCP tools: palace_rooms, palace_room_match, palace_search, palace_room_intent",
+    "Pre-action protocol in CLAUDE.md and skill doc",
+    "Seeded 4 rooms (infra, blog, cli, personas) via Supabase REST API",
+    "All 15 memories backfilled with embeddings"
+  ],
+  "decisions": [
+    "palace_id is text not uuid in rooms table — matched existing palaces schema",
+    "Use supabase.rpc('search_memories') instead of raw pg.Client — DATABASE_URL not reliably available in production",
+    "search_memories SQL function created in Supabase for pgvector cosine similarity",
+    "embed config lookup walks up directory tree to find .palace/config.json — fixes running from packages/cli/",
+    "backfill decrypts AES-256-GCM ciphertext (iv:authTag:ciphertext) using palace_key before embedding",
+    "Removed algorithm=plaintext filter from /api/memories/embed GET — all memories need embeddings regardless of algorithm",
+    "Pushed fixes directly to master per user instruction — no more PRs for this project"
+  ],
+  "next_steps": [
+    "New memories will get embeddings automatically on store (LM Studio must be running)",
+    "Run embed-backfill after each session if LM Studio was offline during store",
+    "Add decisions to rooms as the project evolves via palace_room_intent MCP tool",
+    "Consider adding a frontend for rooms (view intent, linked memories)"
+  ],
+  "files": [
+    "app/api/rooms/route.js",
+    "app/api/rooms/[slug]/route.js",
+    "app/api/rooms/match/route.js",
+    "app/api/search/route.js",
+    "app/api/memories/embed/route.js",
+    "app/api/migrate/route.js",
+    "app/api/store/route.js",
+    "app/api/secure-store/route.js",
+    "app/api/ingest/route.js",
+    "packages/cli/src/embed.ts",
+    "packages/cli/src/embed-backfill.ts",
+    "packages/cli/src/rooms.ts",
+    "packages/cli/src/search.ts",
+    "packages/cli/src/api.ts",
+    "packages/cli/src/mcp.ts",
+    "packages/cli/src/index.ts",
+    "public/memory-palace-skill.md",
+    "public/.well-known/skills/default/skill.md",
+    "CLAUDE.md",
+    "dev/setup-rooms-and-test.sh"
+  ],
+  "blockers": [],
+  "conversation_context": "Implemented full rooms-as-intent-containers + semantic memory search feature. Multiple bugs fixed during deployment testing: Supabase URL typo (missing 'e'), algorithm filter blocking backfill, DATABASE_URL unavailable in prod (switched to supabase RPC with SQL function), embed config not found when running from packages/cli (now walks up tree), encrypted memories skipped by backfill (now decrypts with palace_key). Feature is live on master/prod with all 15 memories embedded.",
+  "repo": "github.com/Camaraterie/memory-palace",
+  "branch": "master",
+  "roster": [],
+  "metadata": {
+    "room": "infra"
+  }
+}

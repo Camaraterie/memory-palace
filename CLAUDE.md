@@ -14,6 +14,21 @@ Before modifying code files in this project, check the Memory Palace for context
 
 If no rooms match, proceed normally but consider whether a room should be created for this area.
 
+## Storing Memories
+
+When asked to store or save a memory, **always use `mempalace store`**, never `mempalace save`. The `save` command has been removed.
+
+`store` generates an image AND stores the memory in one shot:
+```bash
+mempalace store <prompt_file.txt> <payload.json>
+```
+
+1. Create `payload.json` with the session data (session_name, built, decisions, next_steps, files, metadata.room, etc.)
+2. Create `prompt_file.txt` using `mempalace prompt-template` as the base, filled in with session details
+3. Run `mempalace store prompt_file.txt payload.json`
+
+Never use `save`. Never call the API directly. Always use `store`.
+
 ## Git — Commit & Push at Each Milestone
 
 Single canonical remote: `origin` → `github.com/Camaraterie/memory-palace`

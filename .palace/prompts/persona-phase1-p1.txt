@@ -1,0 +1,11 @@
+Comic strip style, 4 panels:
+
+Panel 1 (top-left): A coder with a warm beanie and round glasses sits at a desk with multiple terminal windows glowing amber. Green code flows on screens. A sticky note says "backend work". Small brass frame border.
+
+Panel 2 (top-right): Same coder now wearing colorful headphones, working on vibrant UI mockups with sunset colors. A tablet shows polished interfaces. Blue "teal" accent frame.
+
+Panel 3 (bottom-left): Split screen showing two personas - a DevOps engineer with monitoring displays (cool blue) and a Product Manager with a kanban board (warm office lighting). Connected by dotted line showing collaboration.
+
+Panel 4 (bottom-right): Meta-blogger persona with vintage glasses and quill pen, writing in a Markdown editor. Library aesthetic with tea. A memory card floats showing persona tags like colorful badges.
+
+Overall: Warm brass/gold color scheme, vintage technical aesthetic, visible QR code integration in one panel, "Phase 1 Complete" badge.
