@@ -9,13 +9,19 @@ interface EmbedConfig {
 }
 
 function getEmbedConfig(): EmbedConfig {
-    // Try project-level .palace/config.json first
-    const projectConfig = path.join(process.cwd(), '.palace', 'config.json');
-    if (fs.existsSync(projectConfig)) {
-        try {
-            const data = JSON.parse(fs.readFileSync(projectConfig, 'utf8'));
-            if (data.embedding_api) return data;
-        } catch {}
+    // Walk up from cwd to find .palace/config.json (like git finding .git)
+    let dir = process.cwd();
+    while (true) {
+        const candidate = path.join(dir, '.palace', 'config.json');
+        if (fs.existsSync(candidate)) {
+            try {
+                const data = JSON.parse(fs.readFileSync(candidate, 'utf8'));
+                if (data.embedding_api) return data;
+            } catch {}
+        }
+        const parent = path.dirname(dir);
+        if (parent === dir) break; // reached filesystem root
+        dir = parent;
     }
     return {};
 }

@@ -1,6 +1,5 @@
 import { NextResponse } from 'next/server'
 import { createSupabaseAdmin } from '../../../lib/supabase'
-import { Client } from 'pg'
 
 async function resolveAuth(supabase, authHeader) {
     if (!authHeader || !authHeader.startsWith('Bearer ')) return null
@@ -44,38 +43,22 @@ export async function POST(request) {
         }
 
         if (embedding) {
-            // Semantic search via pgvector cosine similarity
+            // Semantic search via pgvector cosine similarity (Supabase RPC)
             if (!Array.isArray(embedding) || embedding.length !== 768) {
                 return NextResponse.json({ error: 'embedding must be number[768]' }, { status: 400 })
             }
 
-            if (!process.env.DATABASE_URL) {
-                return NextResponse.json({ error: 'DATABASE_URL not configured' }, { status: 500 })
-            }
+            const { data, error: rpcError } = await supabase.rpc('search_memories', {
+                query_embedding: `[${embedding.join(',')}]`,
+                palace_id_param: auth.palace_id,
+                room_filter: room || null,
+                match_count: limit,
+                similarity_threshold: threshold || 0.0,
+            })
 
-            const client = new Client({ connectionString: process.env.DATABASE_URL })
-            try {
-                await client.connect()
-                const vectorStr = `[${embedding.join(',')}]`
-                const params = [vectorStr, auth.palace_id, room || null, limit]
-                const result = await client.query(
-                    `SELECT short_id, agent, session_name, room_slug, created_at,
-                            1 - (embedding <=> $1::vector) as similarity
-                     FROM memories
-                     WHERE palace_id = $2::uuid AND embedding IS NOT NULL
-                       AND ($3::text IS NULL OR room_slug = $3)
-                     ORDER BY embedding <=> $1::vector
-                     LIMIT $4`,
-                    params
-                )
-                let memories = result.rows
-                if (threshold !== undefined) {
-                    memories = memories.filter(m => m.similarity >= threshold)
-                }
-                return NextResponse.json({ success: true, mode: 'semantic', memories })
-            } finally {
-                await client.end()
-            }
+            if (rpcError) throw rpcError
+
+            return NextResponse.json({ success: true, mode: 'semantic', memories: data || [] })
         } else {
             // Keyword fallback via Supabase full-text search on ciphertext
             let q = supabase
