@@ -4,11 +4,17 @@
 set -e
 
 PALACE_ID="7a5c5dd2-093e-4b66-b3ce-b026076e87a1"
-API="https://memory-palace-2nceak3o8-cuer-team.vercel.app"
+API="https://memory-palace-git-feat-rooms-and-embeddings-cuer-team.vercel.app/"
+
+CURL="curl -s"
+# Use vercel curl if the deployment is protected (preview URLs)
+if command -v vercel &>/dev/null && [[ "$API" == *"vercel.app"* ]]; then
+  CURL="vercel curl"
+fi
 
 echo "==> Seeding rooms..."
 
-curl -sf -X POST "$API/api/rooms" \
+$CURL -X POST "$API/api/rooms" \
   -H "Authorization: Bearer $PALACE_ID" \
   -H "Content-Type: application/json" \
   -d '{
@@ -24,7 +30,7 @@ curl -sf -X POST "$API/api/rooms" \
   }' | python3 -m json.tool
 echo ""
 
-curl -sf -X POST "$API/api/rooms" \
+$CURL -X POST "$API/api/rooms" \
   -H "Authorization: Bearer $PALACE_ID" \
   -H "Content-Type: application/json" \
   -d '{
@@ -40,7 +46,7 @@ curl -sf -X POST "$API/api/rooms" \
   }' | python3 -m json.tool
 echo ""
 
-curl -sf -X POST "$API/api/rooms" \
+$CURL -X POST "$API/api/rooms" \
   -H "Authorization: Bearer $PALACE_ID" \
   -H "Content-Type: application/json" \
   -d '{
@@ -56,7 +62,7 @@ curl -sf -X POST "$API/api/rooms" \
   }' | python3 -m json.tool
 echo ""
 
-curl -sf -X POST "$API/api/rooms" \
+$CURL -X POST "$API/api/rooms" \
   -H "Authorization: Bearer $PALACE_ID" \
   -H "Content-Type: application/json" \
   -d '{
@@ -73,17 +79,17 @@ curl -sf -X POST "$API/api/rooms" \
 echo ""
 
 echo "==> Listing rooms to verify..."
-curl -sf "$API/api/rooms" \
+$CURL "$API/api/rooms" \
   -H "Authorization: Bearer $PALACE_ID" | python3 -m json.tool
 echo ""
 
 echo "==> Testing room match (infra files)..."
-curl -sf "$API/api/rooms/match?files=app/api/store/route.js,app/api/migrate/route.js" \
+$CURL "$API/api/rooms/match?files=app/api/store/route.js,app/api/migrate/route.js" \
   -H "Authorization: Bearer $PALACE_ID" | python3 -m json.tool
 echo ""
 
 echo "==> Testing room match (blog files)..."
-curl -sf "$API/api/rooms/match?files=app/blog/page.js,app/api/blog/route.js" \
+$CURL "$API/api/rooms/match?files=app/blog/page.js,app/api/blog/route.js" \
   -H "Authorization: Bearer $PALACE_ID" | python3 -m json.tool
 echo ""
 
@@ -111,14 +117,14 @@ echo "Stored: $SHORT_ID"
 echo ""
 
 echo "==> Testing keyword search fallback (no LM Studio needed)..."
-curl -sf -X POST "$API/api/search" \
+$CURL -X POST "$API/api/search" \
   -H "Authorization: Bearer $PALACE_ID" \
   -H "Content-Type: application/json" \
   -d '{"query": "rooms embeddings", "limit": 5}' | python3 -m json.tool
 echo ""
 
 echo "==> Testing room filter on search..."
-curl -sf -X POST "$API/api/search" \
+$CURL -X POST "$API/api/search" \
   -H "Authorization: Bearer $PALACE_ID" \
   -H "Content-Type: application/json" \
   -d '{"query": "embeddings", "room": "infra", "limit": 5}' | python3 -m json.tool
