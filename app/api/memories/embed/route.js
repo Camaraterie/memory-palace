@@ -82,7 +82,6 @@ export async function GET(request) {
             .select('short_id, session_name, agent, ciphertext, room_slug, created_at')
             .eq('palace_id', palace.id)
             .is('embedding', null)
-            .eq('algorithm', 'plaintext')
             .order('created_at', { ascending: false })
             .limit(limit)
 
