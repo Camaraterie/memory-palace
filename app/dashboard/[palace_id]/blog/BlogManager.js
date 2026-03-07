@@ -212,6 +212,34 @@ export default function BlogManager({ palace, initialPosts, memories }) {
     }
   }
 
+  const handleAutoGenerateCover = async (slug) => {
+    setSaving(prev => ({ ...prev, [slug]: true }))
+    showFeedback(slug, 'Generating deep state cover...', 'success')
+    try {
+      const res = await fetch('/api/palace/visualize', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${palace.id}`,
+        },
+        body: JSON.stringify({ scope: 'blog', target_id: slug }),
+      })
+
+      const result = await res.json()
+      if (result.success) {
+        updateField(slug, 'cover_image', result.image_url)
+        setPosts(prev => prev.map(p => p.slug === slug ? { ...p, cover_image: result.image_url } : p))
+        showFeedback(slug, 'Deep AI Cover generated successfully!')
+      } else {
+        showFeedback(slug, result.error || 'Generation failed', 'error')
+      }
+    } catch (err) {
+      showFeedback(slug, err.message, 'error')
+    } finally {
+      setSaving(prev => ({ ...prev, [slug]: false }))
+    }
+  }
+
   const handleTwoClickAction = (slug, action) => {
     if (confirmAction && confirmAction.slug === slug && confirmAction.action === action) {
       publishAction(slug, action)
@@ -615,6 +643,19 @@ Please start by asking me a few questions about the purpose, audience, and the s
                                 Memories
                               </button>
                             )}
+                            <button
+                              onClick={() => handleAutoGenerateCover(post.slug)}
+                              disabled={isSaving}
+                              style={{
+                                ...btnBase,
+                                background: 'linear-gradient(135deg, rgba(74,157,110,0.15) 0%, rgba(74,127,217,0.15) 100%)',
+                                border: '1px solid rgba(74,157,110,0.3)',
+                                color: '#4a9d6e',
+                                flexShrink: 0,
+                              }}
+                            >
+                              ✨ Deep AI Cover
+                            </button>
                           </div>
                           {data.cover_image && (
                             <div style={{

@@ -12,6 +12,33 @@ export default function PalaceExplorer({ palace, initialMemories }) {
     const [searchQuery, setSearchQuery] = useState('')
     const [filterAgent, setFilterAgent] = useState('')
     const [filterPersona, setFilterPersona] = useState('')
+    const [isVisualizing, setIsVisualizing] = useState(false)
+    const [palaceVisual, setPalaceVisual] = useState(null)
+
+    const handleVisualizePalace = async () => {
+        setIsVisualizing(true)
+        try {
+            const res = await fetch('/api/palace/visualize', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${palace.id}`,
+                },
+                body: JSON.stringify({ scope: 'full', palace_id: palace.id }),
+            })
+            const data = await res.json()
+            if (data.success) {
+                setPalaceVisual(data.image_url)
+            } else {
+                alert(data.error || 'Visualization failed')
+            }
+        } catch (err) {
+            console.error(err)
+            alert('Visualization failed')
+        } finally {
+            setIsVisualizing(false)
+        }
+    }
 
     useEffect(() => {
         const fetchPalaceData = async () => {
@@ -569,6 +596,37 @@ export default function PalaceExplorer({ palace, initialMemories }) {
                             gridTemplateColumns: '1fr',
                             gap: '2rem',
                         }}>
+                            {/* Palace State Visualization */}
+                            <div className="stone-card" style={{ padding: '2rem', display: 'flex', flexDirection: 'column', gap: '1rem', alignItems: 'center', justifyContent: 'center' }}>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%', alignItems: 'flex-start' }}>
+                                    {sectionHeader('Deep State Projection')}
+                                    <button
+                                        onClick={handleVisualizePalace}
+                                        disabled={isVisualizing}
+                                        style={{
+                                            padding: '0.5rem 1.5rem',
+                                            background: 'linear-gradient(135deg, rgba(184,134,11,0.15) 0%, rgba(74,157,110,0.15) 100%)',
+                                            border: '1px solid rgba(184,134,11,0.3)',
+                                            color: 'var(--brass)',
+                                            borderRadius: '100px',
+                                            fontFamily: 'var(--font-mono)',
+                                            fontSize: '0.65rem',
+                                            textTransform: 'uppercase',
+                                            letterSpacing: '0.15em',
+                                            cursor: isVisualizing ? 'not-allowed' : 'pointer',
+                                            opacity: isVisualizing ? 0.7 : 1,
+                                        }}
+                                    >
+                                        {isVisualizing ? 'Projecting...' : '✨ Visualize Domain'}
+                                    </button>
+                                </div>
+                                {palaceVisual && (
+                                    <div style={{ width: '100%', aspectRatio: '21/9', position: 'relative', borderRadius: '12px', overflow: 'hidden', border: '1px solid rgba(184,134,11,0.2)' }}>
+                                        <Image src={palaceVisual} alt="Palace State" fill style={{ objectFit: 'cover' }} />
+                                    </div>
+                                )}
+                            </div>
+
                             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '2rem' }}>
                                 <div>
                                     {sectionHeader('Open Next Steps')}

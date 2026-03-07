@@ -107,10 +107,15 @@ export async function roomShowCommand(slug: string, options: { limit?: string } 
     }
 
     if (memories?.length) {
-        console.log(`\nRecent memories (${memories.length}):`);
+        console.log(`\nRECENT STATE (Linked History):`);
         memories.forEach((m: any) => {
             const date = new Date(m.created_at).toLocaleDateString();
-            console.log(`  ${m.short_id}  ${date}  ${m.agent}  ${m.session_name}`);
+            console.log(`- [${m.short_id}] ${date} (${m.agent}): ${m.session_name}`);
+            if (m.payload && m.payload.decisions && m.payload.decisions.length > 0) {
+                m.payload.decisions.forEach((d: string) => {
+                    console.log(`    Decision: ${d}`);
+                });
+            }
         });
     } else {
         console.log('\nNo memories linked to this room yet.');
