@@ -5,7 +5,7 @@
 set -e
 
 PALACE_ID="7a5c5dd2-093e-4b66-b3ce-b026076e87a1"
-SUPABASE_URL="https://dbjduzunlfldquwwgsx.supabase.co"
+SUPABASE_URL="https://dbjduzeunlfldquwwgsx.supabase.co"
 SERVICE_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRiamR1emV1bmxmbGRxdXd3Z3N4Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3MDM2MDk4OSwiZXhwIjoyMDg1OTM2OTg5fQ.bpF6bTx0RWuYWjcO41XM9lPasl74G_jCZfkFeU92jPg"
 
 REST="$SUPABASE_URL/rest/v1"
