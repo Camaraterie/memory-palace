@@ -1,6 +1,7 @@
 import fetch from 'node-fetch';
 import { API_BASE, Config } from './config';
 import { encryptPayload, signPayload, verifySignature, decryptPayload } from './crypto';
+import { generateEmbedding, buildDocumentText } from './embed';
 import fs from 'fs';
 import FormData from 'form-data';
 
@@ -24,10 +25,13 @@ export async function getMemories(authToken: string, limit: number = 10): Promis
 }
 
 export async function storeMemory(config: Config, payload: any, imageUrl?: string) {
-    const body = {
+    const embedding = await generateEmbedding(buildDocumentText(payload), 'document');
+
+    const body: any = {
         payload, // Always send plaintext for the default store
         image_url: imageUrl
     };
+    if (embedding) body.embedding = embedding;
 
     const authToken = config.guest_key || config.palace_id;
 

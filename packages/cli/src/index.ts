@@ -11,6 +11,9 @@ import { attachImage } from './attach';
 import { generateCommand } from './generate';
 import { storeCommand } from './store-command';
 import { generatePromptTemplateCommand } from './generate-prompt';
+import { roomCreateCommand, roomListCommand, roomShowCommand, roomMatchCommand } from './rooms';
+import { searchCommand } from './search';
+import { embedBackfillCommand } from './embed-backfill';
 
 const program = new Command();
 
@@ -137,6 +140,59 @@ program
     .description('Start MCP server over stdio')
     .action(async () => {
         await runMcpServer();
+    });
+
+const room = program.command('room').description('Manage rooms (project intent containers)');
+
+room
+    .command('create <slug>')
+    .description('Create or update a room')
+    .option('--name <name>', 'Room display name')
+    .option('--intent <intent>', 'Design intent and purpose of this project area')
+    .option('--patterns <patterns>', 'Comma-separated glob patterns for matching files')
+    .option('--principles <principles>', 'Comma-separated design principles')
+    .option('--decisions <decisions>', 'Pipe-separated decisions (what:why|what:why)')
+    .action(async (slug, options) => {
+        await roomCreateCommand(slug, options);
+    });
+
+room
+    .command('list')
+    .description('List all rooms with intent and memory counts')
+    .action(async () => {
+        await roomListCommand();
+    });
+
+room
+    .command('show <slug>')
+    .description('Show room details with linked memories')
+    .option('--limit <n>', 'Number of memories to show', '10')
+    .action(async (slug, options) => {
+        await roomShowCommand(slug, options);
+    });
+
+room
+    .command('match <files...>')
+    .description('Find rooms matching the given file paths')
+    .action(async (files) => {
+        await roomMatchCommand(files);
+    });
+
+program
+    .command('search <query>')
+    .description('Semantic search across memories (falls back to keyword if no embedding config)')
+    .option('--room <slug>', 'Filter results to a specific room')
+    .option('--limit <n>', 'Number of results to return', '10')
+    .action(async (query, options) => {
+        await searchCommand(query, options);
+    });
+
+program
+    .command('embed-backfill')
+    .description('Retroactively generate embeddings for memories that lack them')
+    .option('--limit <n>', 'Number of memories to process', '50')
+    .action(async (options) => {
+        await embedBackfillCommand(parseInt(options.limit, 10));
     });
 
 program
