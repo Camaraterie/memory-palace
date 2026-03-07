@@ -74,27 +74,18 @@ export async function POST(request) {
     const token = authHeader.split(' ')[1]
     let palaceId = null
 
-    if (token.startsWith('gk_')) {
-      const { data: agent, error } = await supabase
-        .from('agents')
-        .select('palace_id, active')
-        .eq('guest_key', token)
-        .single()
-      if (error || !agent || !agent.active) {
-        return NextResponse.json({ error: 'Invalid or inactive guest key' }, { status: 403, headers: CORS_HEADERS })
-      }
-      palaceId = agent.palace_id
-    } else {
-      const { data: palace, error } = await supabase
-        .from('palaces')
-        .select('id')
-        .eq('id', token)
-        .single()
-      if (error || !palace) {
-        return NextResponse.json({ error: 'Invalid palace_id' }, { status: 403, headers: CORS_HEADERS })
-      }
-      palaceId = palace.id
+    if (!token.startsWith('gk_')) {
+      return NextResponse.json({ error: 'Authorization required' }, { status: 403, headers: CORS_HEADERS })
     }
+    const { data: agent, error } = await supabase
+      .from('agents')
+      .select('palace_id, active')
+      .eq('guest_key', token)
+      .single()
+    if (error || !agent || !agent.active) {
+      return NextResponse.json({ error: 'Invalid or inactive guest key' }, { status: 403, headers: CORS_HEADERS })
+    }
+    palaceId = agent.palace_id
 
     // Check if personas already exist for this palace
     const { data: existing, error: checkError } = await supabase

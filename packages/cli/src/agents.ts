@@ -3,7 +3,7 @@ import { getConfig, API_BASE } from './config';
 
 function getAuthHeader(): string {
     const conf = getConfig();
-    return `Bearer ${conf.palace_id}`;
+    return `Bearer ${conf.guest_key || conf.palace_id}`;
 }
 
 async function handleError(res: any) {

@@ -20,13 +20,7 @@ async function resolveAuth(supabase, authHeader) {
     return { palace_id: agent.palace_id }
   }
 
-  const { data: palace, error } = await supabase
-    .from('palaces')
-    .select('id')
-    .eq('id', token)
-    .single()
-  if (error || !palace) return null
-  return { palace_id: palace.id }
+  return null
 }
 
 export async function POST(request) {

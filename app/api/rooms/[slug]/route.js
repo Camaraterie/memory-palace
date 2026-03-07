@@ -15,13 +15,7 @@ async function resolveAuth(supabase, authHeader) {
         return { palace_id: data.palace_id }
     }
 
-    const { data, error } = await supabase
-        .from('palaces')
-        .select('id')
-        .eq('id', token)
-        .single()
-    if (error || !data) return null
-    return { palace_id: data.id }
+    return null
 }
 
 // GET /api/rooms/[slug] — single room with linked memories

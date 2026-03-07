@@ -77,13 +77,7 @@ async function resolveStoreAuth(supabase, authHeader) {
         return palace
     }
 
-    const { data, error } = await supabase
-        .from('palaces')
-        .select('id, public_key')
-        .eq('id', token)
-        .single()
-    if (error || !data) return null
-    return data
+    return null
 }
 
 export async function POST(request) {

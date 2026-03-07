@@ -9,13 +9,15 @@ function generateGuestKey() {
 async function resolvePalaceId(supabase, authHeader) {
     if (!authHeader || !authHeader.startsWith('Bearer ')) return null
     const token = authHeader.split(' ')[1]
+    if (!token.startsWith('gk_')) return null
     const { data, error } = await supabase
-        .from('palaces')
-        .select('id')
-        .eq('id', token)
+        .from('agents')
+        .select('palace_id, permissions, active')
+        .eq('guest_key', token)
         .single()
-    if (error || !data) return null
-    return data.id
+    if (error || !data || !data.active) return null
+    if (data.permissions !== 'admin') return null
+    return data.palace_id
 }
 
 // POST   /api/agents — create a guest key for an agent

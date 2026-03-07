@@ -19,13 +19,7 @@ async function resolveAuth(supabase, authHeader, queryAuth) {
         return { palace_id: data.palace_id, permissions: data.permissions, agent_name: data.agent_name, via: 'guest_key' }
     }
 
-    const { data, error } = await supabase
-        .from('palaces')
-        .select('id')
-        .eq('id', token)
-        .single()
-    if (error || !data) return null
-    return { palace_id: data.id, permissions: 'admin', via: 'palace_id' }
+    return null
 }
 
 export async function GET(request) {

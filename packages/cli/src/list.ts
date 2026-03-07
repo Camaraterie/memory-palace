@@ -4,7 +4,7 @@ import { getMemories } from './api';
 export async function listMemories(limit: number = 10) {
     try {
         const conf = getConfig();
-        const data = (await getMemories(conf.palace_id, limit)) as any;
+        const data = (await getMemories(conf.guest_key || conf.palace_id, limit)) as any;
 
         console.log(`Recent Memories for Palace ${conf.palace_id}:`);
         if (!data.memories || data.memories.length === 0) {
