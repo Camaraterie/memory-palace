@@ -1,5 +1,19 @@
 @https://m.cuer.ai/memory-palace-skill.md
 
+## Pre-Action Protocol
+
+Before modifying code files in this project, check the Memory Palace for context:
+
+1. Identify which files you plan to modify
+2. Query rooms: `GET /api/rooms/match?auth=<key>&files=<file1>,<file2>`
+   Or use MCP tool: `palace_room_match`
+3. Read the matched room's **intent** and **principles** — these are design constraints
+4. Search for related memories: `POST /api/search` with a description of your task
+   Or use MCP tool: `palace_search`
+5. Align your implementation with room intent. Note deviations explicitly.
+
+If no rooms match, proceed normally but consider whether a room should be created for this area.
+
 ## Git — Commit & Push at Each Milestone
 
 Single canonical remote: `origin` → `github.com/Camaraterie/memory-palace`
