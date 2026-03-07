@@ -198,7 +198,7 @@ export async function POST(req) {
     await client.query(`
       CREATE TABLE IF NOT EXISTS rooms (
         id uuid DEFAULT gen_random_uuid() PRIMARY KEY,
-        palace_id uuid NOT NULL REFERENCES palaces(id) ON DELETE CASCADE,
+        palace_id text NOT NULL REFERENCES palaces(id) ON DELETE CASCADE,
         slug text NOT NULL,
         name text NOT NULL,
         intent text,
