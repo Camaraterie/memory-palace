@@ -1,134 +1,96 @@
 #!/usr/bin/env bash
-# Seed rooms + test embeddings after the migration runs
+# Seed rooms + test embeddings
+# Talks directly to Supabase REST API — no deployment protection issues
 # Usage: bash dev/setup-rooms-and-test.sh
 set -e
 
 PALACE_ID="7a5c5dd2-093e-4b66-b3ce-b026076e87a1"
-API="https://memory-palace-git-feat-rooms-and-embeddings-cuer-team.vercel.app/"
+SUPABASE_URL="https://dbjduzunlfldquwwgsx.supabase.co"
+SERVICE_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRiamR1emV1bmxmbGRxdXd3Z3N4Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3MDM2MDk4OSwiZXhwIjoyMDg1OTM2OTg5fQ.bpF6bTx0RWuYWjcO41XM9lPasl74G_jCZfkFeU92jPg"
 
-CURL="curl -s"
-# Use vercel curl if the deployment is protected (preview URLs)
-if command -v vercel &>/dev/null && [[ "$API" == *"vercel.app"* ]]; then
-  CURL="vercel curl"
-fi
+REST="$SUPABASE_URL/rest/v1"
+AUTH="-H \"apikey: $SERVICE_KEY\" -H \"Authorization: Bearer $SERVICE_KEY\""
+
+supa_post() {
+  local table="$1"
+  local data="$2"
+  curl -s -X POST "$REST/$table" \
+    -H "apikey: $SERVICE_KEY" \
+    -H "Authorization: Bearer $SERVICE_KEY" \
+    -H "Content-Type: application/json" \
+    -H "Prefer: return=representation,resolution=merge-duplicates" \
+    -d "$data"
+}
+
+supa_get() {
+  local path="$1"
+  curl -s -X GET "$REST/$path" \
+    -H "apikey: $SERVICE_KEY" \
+    -H "Authorization: Bearer $SERVICE_KEY"
+}
 
 echo "==> Seeding rooms..."
 
-$CURL -X POST "$API/api/rooms" \
-  -H "Authorization: Bearer $PALACE_ID" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "slug": "infra",
-    "name": "Infrastructure",
-    "intent": "Supabase DB, API routes, auth, deployment. Stability and backward compatibility are paramount — changes here break everything.",
-    "principles": [
-      "Never break existing API contracts",
-      "Run migrations idempotently",
-      "Auth changes require owner review"
-    ],
-    "file_patterns": ["app/api/**", "app/lib/**", "lib/**"]
-  }' | python3 -m json.tool
+echo "--- infra ---"
+supa_post "rooms" '{
+  "palace_id": "'"$PALACE_ID"'",
+  "slug": "infra",
+  "name": "Infrastructure",
+  "intent": "Supabase DB, API routes, auth, deployment. Stability and backward compatibility are paramount — changes here break everything.",
+  "principles": ["Never break existing API contracts","Run migrations idempotently","Auth changes require owner review"],
+  "file_patterns": ["app/api/**","app/lib/**","lib/**"]
+}' | python3 -m json.tool
 echo ""
 
-$CURL -X POST "$API/api/rooms" \
-  -H "Authorization: Bearer $PALACE_ID" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "slug": "blog",
-    "name": "Blog",
-    "intent": "AI persona reflections and project chronicles — not marketing. Posts are authored by personas (FLUX, FORGE, etc.), not anonymously. The blog is a first-person account of building with AI agents.",
-    "principles": [
-      "Persona-authored content only",
-      "No anonymous or corporate-voice posts",
-      "Categories are persona-led themes, not topic tags"
-    ],
-    "file_patterns": ["app/blog/**", "app/api/blog/**", "components/blog/**"]
-  }' | python3 -m json.tool
+echo "--- blog ---"
+supa_post "rooms" '{
+  "palace_id": "'"$PALACE_ID"'",
+  "slug": "blog",
+  "name": "Blog",
+  "intent": "AI persona reflections and project chronicles — not marketing. Posts are authored by personas (FLUX, FORGE, etc.), not anonymously. The blog is a first-person account of building with AI agents.",
+  "principles": ["Persona-authored content only","No anonymous or corporate-voice posts","Categories are persona-led themes not topic tags"],
+  "file_patterns": ["app/blog/**","app/api/blog/**","components/blog/**"]
+}' | python3 -m json.tool
 echo ""
 
-$CURL -X POST "$API/api/rooms" \
-  -H "Authorization: Bearer $PALACE_ID" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "slug": "cli",
-    "name": "CLI and MCP",
-    "intent": "The mempalace CLI and MCP server. Must work offline-first and degrade gracefully when the API is unreachable. Published to npm so breaking changes require a semver bump.",
-    "principles": [
-      "Graceful degradation on API failure",
-      "Semver discipline for npm releases",
-      "MCP tools must be idempotent"
-    ],
-    "file_patterns": ["packages/cli/**"]
-  }' | python3 -m json.tool
+echo "--- cli ---"
+supa_post "rooms" '{
+  "palace_id": "'"$PALACE_ID"'",
+  "slug": "cli",
+  "name": "CLI and MCP",
+  "intent": "The mempalace CLI and MCP server. Must work offline-first and degrade gracefully when the API is unreachable. Published to npm so breaking changes require a semver bump.",
+  "principles": ["Graceful degradation on API failure","Semver discipline for npm releases","MCP tools must be idempotent"],
+  "file_patterns": ["packages/cli/**"]
+}' | python3 -m json.tool
 echo ""
 
-$CURL -X POST "$API/api/rooms" \
-  -H "Authorization: Bearer $PALACE_ID" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "slug": "personas",
-    "name": "Personas",
-    "intent": "AI persona system. Named characters (FLUX, FORGE, etc.) with distinct voices and visual identities. Personas author blog posts and appear in memory images. Character consistency across sessions is critical.",
-    "principles": [
-      "Character descriptions must be verbatim for visual consistency",
-      "Personas have distinct voices — never bland or corporate",
-      "Each persona owns specific content domains"
-    ],
-    "file_patterns": ["app/api/personas/**", "components/persona/**", "app/personas/**"]
-  }' | python3 -m json.tool
+echo "--- personas ---"
+supa_post "rooms" '{
+  "palace_id": "'"$PALACE_ID"'",
+  "slug": "personas",
+  "name": "Personas",
+  "intent": "AI persona system. Named characters (FLUX, FORGE, etc.) with distinct voices and visual identities. Personas author blog posts and appear in memory images. Character consistency across sessions is critical.",
+  "principles": ["Character descriptions must be verbatim for visual consistency","Personas have distinct voices — never bland or corporate","Each persona owns specific content domains"],
+  "file_patterns": ["app/api/personas/**","components/persona/**","app/personas/**"]
+}' | python3 -m json.tool
 echo ""
 
-echo "==> Listing rooms to verify..."
-$CURL "$API/api/rooms" \
-  -H "Authorization: Bearer $PALACE_ID" | python3 -m json.tool
+echo "==> Verifying rooms in DB..."
+supa_get "rooms?palace_id=eq.$PALACE_ID&select=slug,name,intent" | python3 -m json.tool
 echo ""
 
-echo "==> Testing room match (infra files)..."
-$CURL "$API/api/rooms/match?files=app/api/store/route.js,app/api/migrate/route.js" \
-  -H "Authorization: Bearer $PALACE_ID" | python3 -m json.tool
+echo "==> Done. Rooms are seeded directly in Supabase."
 echo ""
-
-echo "==> Testing room match (blog files)..."
-$CURL "$API/api/rooms/match?files=app/blog/page.js,app/api/blog/route.js" \
-  -H "Authorization: Bearer $PALACE_ID" | python3 -m json.tool
+echo "Next steps:"
+echo "  1. Test /api/rooms/match via the preview URL (once unprotected or merged):"
+echo "     curl -s 'https://m.cuer.ai/api/rooms/match?files=app/api/store/route.js' \\"
+echo "       -H 'Authorization: Bearer $PALACE_ID' | python3 -m json.tool"
 echo ""
-
-echo "==> Storing test memory with room assignment..."
-cat > /tmp/mp-test-payload.json << 'PAYLOAD_EOF'
-{
-  "session_name": "rooms-and-embeddings feature test",
-  "agent": "claude-sonnet-4-6",
-  "status": "Implemented rooms as intent containers and semantic memory search",
-  "outcome": "succeeded",
-  "built": ["rooms table", "pgvector embeddings", "CLI room commands", "MCP tools"],
-  "decisions": ["Use HNSW index over IVFFlat for zero-row compatibility", "Graceful degradation when LM Studio unavailable"],
-  "next_steps": ["Seed rooms for all project areas", "Run embed-backfill on existing memories"],
-  "files": ["app/api/rooms/route.js", "app/api/search/route.js", "packages/cli/src/embed.ts"],
-  "blockers": [],
-  "conversation_context": "Added rooms as first-class DB entities with intent, principles, decisions and file_patterns. Added pgvector semantic search. Wired embeddings into CLI store flow via LM Studio.",
-  "roster": {},
-  "metadata": {"room": "infra"}
-}
-PAYLOAD_EOF
-
-cd /home/cambuntu/clawd/projects/memory-palace/packages/cli
-SHORT_ID=$(npx ts-node src/index.ts save /tmp/mp-test-payload.json 2>&1 | grep "short_id:" | awk '{print $NF}')
-echo "Stored: $SHORT_ID"
+echo "  2. Test embed-backfill (requires LM Studio at 192.168.86.30:1234):"
+echo "     cd packages/cli && npx ts-node src/index.ts embed-backfill --limit 10"
 echo ""
-
-echo "==> Testing keyword search fallback (no LM Studio needed)..."
-$CURL -X POST "$API/api/search" \
-  -H "Authorization: Bearer $PALACE_ID" \
-  -H "Content-Type: application/json" \
-  -d '{"query": "rooms embeddings", "limit": 5}' | python3 -m json.tool
-echo ""
-
-echo "==> Testing room filter on search..."
-$CURL -X POST "$API/api/search" \
-  -H "Authorization: Bearer $PALACE_ID" \
-  -H "Content-Type: application/json" \
-  -d '{"query": "embeddings", "room": "infra", "limit": 5}' | python3 -m json.tool
-echo ""
-
-echo "==> Done. Run embed-backfill to backfill embeddings on existing memories:"
-echo "    cd packages/cli && npx ts-node src/index.ts embed-backfill --limit 20"
+echo "  3. Test keyword search (no LM Studio needed):"
+echo "     curl -s -X POST 'https://m.cuer.ai/api/search' \\"
+echo "       -H 'Authorization: Bearer $PALACE_ID' \\"
+echo "       -H 'Content-Type: application/json' \\"
+echo "       -d '{\"query\":\"embeddings\",\"limit\":5}' | python3 -m json.tool"
