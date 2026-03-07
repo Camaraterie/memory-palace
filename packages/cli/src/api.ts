@@ -1,6 +1,7 @@
 import fetch from 'node-fetch';
 import { API_BASE, Config } from './config';
 import { encryptPayload, signPayload, verifySignature, decryptPayload } from './crypto';
+import { generateEmbedding, buildDocumentText } from './embed';
 import fs from 'fs';
 import FormData from 'form-data';
 
@@ -24,10 +25,13 @@ export async function getMemories(authToken: string, limit: number = 10): Promis
 }
 
 export async function storeMemory(config: Config, payload: any, imageUrl?: string) {
-    const body = {
+    const embedding = await generateEmbedding(buildDocumentText(payload), 'document');
+
+    const body: any = {
         payload, // Always send plaintext for the default store
         image_url: imageUrl
     };
+    if (embedding) body.embedding = embedding;
 
     const authToken = config.guest_key || config.palace_id;
 
@@ -43,7 +47,14 @@ export async function storeMemory(config: Config, payload: any, imageUrl?: strin
     if (!res.ok) {
         throw new Error(`Failed to store: ${res.status} ${await res.text()}`);
     }
-    return await res.json();
+    const rawText = await res.text();
+    try {
+        return JSON.parse(rawText);
+    } catch (e: any) {
+        // Show what the server actually returned to aid debugging
+        const preview = rawText.slice(0, 200).replace(/[\x00-\x1f\x7f-\x9f]/g, (c) => `\\x${c.charCodeAt(0).toString(16).padStart(2,'0')}`);
+        throw new Error(`Server returned unparseable response (${e.message}). Raw: ${preview}`);
+    }
 }
 
 export async function secureStoreMemory(config: Config, payload: any, imageUrl?: string) {

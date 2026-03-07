@@ -142,6 +142,16 @@ export async function POST(request) {
         const host = request.headers.get('host') || 'localhost:3000'
         const shortUrl = `${protocol}://${host}/q/${shortId}`
 
+        // Validate embedding if provided (768-dim float array)
+        let embedding = null
+        if (body.embedding) {
+            if (Array.isArray(body.embedding) && body.embedding.length === 768 &&
+                body.embedding.every(v => typeof v === 'number' && isFinite(v))) {
+                embedding = `[${body.embedding.join(',')}]`
+            }
+            // silently null if invalid — never reject a store over a bad embedding
+        }
+
         const dbRecord = {
             id: uuidv4(),
             short_id: shortId,
@@ -155,7 +165,9 @@ export async function POST(request) {
             // Encrypted payloads should use /secure-store instead
             ciphertext: JSON.stringify(payload),
             signature: null,
-            algorithm: 'plaintext'
+            algorithm: 'plaintext',
+            room_slug: payload.metadata?.room || null,
+            embedding,
         }
 
         const { error: insertError } = await supabase
