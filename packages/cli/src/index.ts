@@ -11,6 +11,7 @@ import { generateCommand } from './generate';
 import { storeCommand } from './store-command';
 import { generatePromptTemplateCommand } from './generate-prompt';
 import { roomCreateCommand, roomListCommand, roomShowCommand, roomMatchCommand } from './rooms';
+import { blogListCommand, blogReadCommand } from './blog';
 import { searchCommand } from './search';
 import { embedBackfillCommand } from './embed-backfill';
 
@@ -131,6 +132,22 @@ program
     .description('Start MCP server over stdio')
     .action(async () => {
         await runMcpServer();
+    });
+
+const blog = program.command('blog').description('Manage and read architectural blog posts');
+
+blog
+    .command('list')
+    .description('List recent blog posts')
+    .action(async () => {
+        await blogListCommand();
+    });
+
+blog
+    .command('read <slugOrLatest>')
+    .description('Read a specific blog post by slug or use "latest"')
+    .action(async (slugOrLatest) => {
+        await blogReadCommand(slugOrLatest);
     });
 
 const room = program.command('room').description('Manage rooms (project intent containers)');

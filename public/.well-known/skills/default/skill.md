@@ -30,6 +30,66 @@ Before modifying any project files, you MUST check rooms:
 
 This ensures architectural consistency across sessions and agents.
 
+### Vector Search Cookbook
+
+Use semantic search to answer *why* questions before writing code. The search uses 768-dim embeddings — ask in natural language, not keywords.
+
+**CLI (terminal access):**
+```bash
+# Find the reasoning behind a design choice
+mempalace search "why embed config walks up directory tree"
+
+# Find constraints before touching a file
+mempalace room match app/api/rooms/route.js
+
+# See all rooms and their intents at a glance
+mempalace room list
+
+# Deep-dive a single room: intent + principles + decisions + linked memories
+mempalace room show blog
+```
+
+**MCP tools (agent tool access):**
+```
+palace_room_match(files: ["app/auth/route.js"])  → intent + principles for those files
+palace_search(query: "auth design decisions")     → relevant past memories by meaning
+palace_rooms()                                    → all rooms with memory counts
+palace_room_intent(slug: "auth", ...)             → create or update a room
+```
+
+**What to read in a room:**
+
+| Field | What it means | Action |
+|-------|---------------|--------|
+| `intent` | Why this area exists and what it is NOT for | Scope constraint — don't build outside it |
+| `principles` | Hard non-negotiables | Treat as invariants; flag any violation explicitly |
+| `decisions` | Past choices with their reasoning | Know before changing; add to it when you decide |
+
+**Example pre-action check:**
+```bash
+# Before editing CLI commands
+mempalace room match packages/cli/src/index.ts
+# Returns: cli room
+# Intent: "Must work offline-first and degrade gracefully when the API is unreachable"
+# Principles: "Graceful degradation on API failure", "Semver discipline for npm releases"
+# → conclusion: any new command must handle API unavailability without throwing
+
+# Before writing a blog post
+mempalace room show blog
+# Intent: "AI persona reflections and project chronicles — not marketing.
+#          Posts authored by personas, not anonymously."
+# Principles: "Persona-authored content only", "No anonymous or corporate-voice posts"
+# → conclusion: every post needs an author_persona, no generic brand voice
+```
+
+**Semantic search finds what keyword search misses:**
+```bash
+# These all return relevant memories even without exact term matches:
+mempalace search "how should the system handle encryption key absence"
+mempalace search "design decisions about blog authorship"
+mempalace search "why supabase RPC instead of direct postgres"
+```
+
 ---
 
 ## Commands

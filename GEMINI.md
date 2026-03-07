@@ -53,6 +53,54 @@ yes y | cp -i public/memory-palace-skill.md public/.well-known/skills/default/sk
 
 Outdated skill docs cause agent failures in the field. Treat the skill doc as a first-class artifact, not an afterthought.
 
+## Vector Search — Finding Intent Before You Code
+
+Before touching any file, ask the palace why it is built the way it is. Rooms store **intent**, **principles**, and **decisions** — the constraints that outlive any single session.
+
+### Find which room governs your files
+
+```bash
+mempalace room match app/api/rooms/route.js app/blog/page.tsx
+```
+
+Returns matching rooms with `intent`, `principles`, and `decisions`. Read these first.
+
+### Search semantically for past decisions
+
+```bash
+mempalace search "why does blog require persona authorship"
+mempalace search "CLI graceful degradation strategy"
+mempalace search "embedding backfill design"
+```
+
+Uses 768-dim nomic embeddings — ask the question you actually have. Returns memory short_ids by semantic similarity. Recover full context with `mempalace recover <short_id>`.
+
+### Browse all rooms
+
+```bash
+mempalace room list              # all rooms + intent at a glance
+mempalace room show blog         # intent, principles, decisions, linked memories
+```
+
+### What to extract from a room
+
+| Field | Meaning | Action |
+|-------|---------|--------|
+| `intent` | Why this area exists and what it is NOT for | Scope constraint — don't build outside it |
+| `principles` | Hard non-negotiables | Treat as invariants; flag any violation |
+| `decisions` | Past choices with reasoning | Know before changing; add to it when you decide |
+
+### Via MCP (if configured)
+
+```
+palace_room_match(files: ["..."])  → intent + principles for those files
+palace_search(query: "...")        → relevant past memories by meaning
+palace_rooms()                     → all rooms
+palace_room_intent(slug: "...",)   → create or update a room
+```
+
+---
+
 ## Session start
 
 ```bash
@@ -68,7 +116,7 @@ curl -s "https://m.cuer.ai/api/context?auth=$MP_GUEST_KEY" | python3 -m json.too
 ## Store workflow
 
 `.palace/prompts/` holds the **image generation prompt** (a .txt file).
-The JSON payload is a separate file used only as input to `mempalace save`.
+The JSON payload is a separate file passed to `mempalace store`.
 These are two different things — do not confuse them.
 
 ### Step 1 — Write the image generation prompt
@@ -157,11 +205,7 @@ This single command:
 4. Saves the image to `.palace/memories/<short_id>.png`
 5. Uploads to Supabase storage
 
-Or run the two steps separately if you need the short_id first:
-```bash
-mempalace save /tmp/mem-NNN-payload.json          # prints short_id
-mempalace generate .palace/prompts/mem-NNN.txt <short_id>
-```
+**Note:** `mempalace save` has been removed — `store` is the only command. It handles the full flow in one shot.
 
 ### Step 4 — Commit and push
 
