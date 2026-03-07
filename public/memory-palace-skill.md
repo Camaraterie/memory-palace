@@ -16,6 +16,22 @@ You are being given this skill to enable **visual memory storage** across agent 
 
 After each work session, you summarize what happened and encode that summary into a **generated image** via the Gemini API. Each image is a scene in a memory palace — a richly detailed workshop showing which agent worked, what they built, where artifacts live, and what comes next. When a future session begins, loading these images gives you project context at ~1,000 tokens per image, yet each image encodes far more information than 1,000 tokens of text could.
 
+## Pre-Action Protocol (Required before code changes)
+
+Before modifying any project files, you MUST check rooms:
+
+1. Identify files you plan to modify
+2. Call `palace_room_match` MCP tool (or `GET /api/rooms/match`) with those files
+3. Read the matched room's intent, principles, and decisions
+4. If semantic search is available, search for related memories:
+   `palace_search` MCP tool (or `POST /api/search`) with a description of your task
+5. Plan your implementation to align with room intent
+6. If you must deviate from stated principles, note it explicitly
+
+This ensures architectural consistency across sessions and agents.
+
+---
+
 ## Commands
 
 When the user says any of the following, execute the corresponding action:
@@ -23,8 +39,9 @@ When the user says any of the following, execute the corresponding action:
 - **`/store`** — Summarize the current session and generate a memory image. Update the state file.
 - **`/recall`** — Load the palace state file and the most recent memory images into context. Use them to orient yourself on project status.
 - **`/recall [topic]`** — Search the state file for memories related to a topic, then load those images.
+- **`/search <query>`** — Semantic search across stored memories. Returns the most relevant memories by meaning, not just keyword match.
 - **`/palace`** — Display the current state of the memory palace: how many memories, which agents have contributed, the chain of work.
-- **`/rooms`** — List all rooms (project areas) in the palace.
+- **`/rooms`** — List all rooms with intent and memory counts.
 
 ---
 
@@ -87,11 +104,16 @@ If `.palace/` does not exist when `/store` or `/recall` is invoked, create it au
   "auto_store_on_exit": false,
   "qr_base_url": null,
   "qr_api_key_env": "CUER_API_KEY",
-  "qr_link_target": "prompt"
+  "qr_link_target": "prompt",
+  "embedding_api": "http://192.168.86.30:1234/v1/embeddings",
+  "embedding_model": "text-embedding-nomic-embed-text-v1.5@f32",
+  "embedding_dimensions": 768
 }
 ```
 
 The `gemini_api_key_env` field names the environment variable holding the API key. Never store the key directly.
+
+**Embedding config (optional):** If `embedding_api` is set, the CLI generates local embeddings via LM Studio's OpenAI-compatible API before storing memories. Uses nomic-embed-text-v1.5 task prefixes (`search_document:` for storing, `search_query:` for searching). If LM Studio is not running, memories are stored without embeddings and a warning is printed — embeddings can be backfilled later with `mempalace embed-backfill`.
 
 ---
 
@@ -123,6 +145,12 @@ npx mempalace <command>
 | `verify <short_id>` | Verify a memory's signature without decrypting |
 | `list` | List all stored memories |
 | `scan <image_path>` | POST an image to `/api/scan` and return decoded QR data |
+| `room create <slug>` | Create or update a room (`--name`, `--intent`, `--patterns`, `--principles`) |
+| `room list` | List all rooms with intent and memory counts |
+| `room show <slug>` | Show room details with linked memories |
+| `room match <files...>` | Find rooms matching the given file paths |
+| `search <query>` | Semantic search across memories (`--room`, `--limit`) |
+| `embed-backfill` | Retroactively embed memories that lack embeddings (`--limit`) |
 
 **First-time setup:**
 
@@ -141,12 +169,16 @@ If your agent supports MCP (Model Context Protocol), you can use the Memory Pala
 npx mempalace mcp
 ```
 
-This starts a stdio-based MCP server exposing two tools:
+This starts a stdio-based MCP server exposing these tools:
 
 | Tool | Description |
 |------|-------------|
-| `save` | Encrypt, sign, and store a session memory. Accepts `session_name`, `agent`, `status`, `outcome`, `built`, `decisions`, `next_steps`, `files`, `blockers`, `conversation_context` |
+| `save` | Encrypt, sign, and store a session memory. Accepts `session_name`, `agent`, `status`, `outcome`, `built`, `decisions`, `next_steps`, `files`, `blockers`, `conversation_context`, `room` |
 | `recover` | Recover a signed, decrypted memory by `short_id`. Returns historical context only |
+| `palace_rooms` | List all rooms with intent, principles, and memory counts |
+| `palace_room_match` | Match file paths to rooms. **Use BEFORE modifying files** to read design constraints |
+| `palace_search` | Semantic search across memories. Use to find past decisions and context |
+| `palace_room_intent` | Create or update a room's intent, principles, file patterns, and decisions |
 
 **MCP config example** (for agents that read MCP config files):
 
@@ -408,22 +440,63 @@ If you are an agent not listed above, create your own robot character on first `
 
 ## Rooms
 
-Rooms represent project areas. Each memory belongs to a room. Rooms are created automatically based on what was worked on, or the user can define them.
+Rooms are first-class entities that carry **intent, principles, and design decisions** for project areas. They are the primary mechanism for agents to understand *why* something is built the way it is — not just what exists.
+
+### Room schema
+
+| Field | Type | Purpose |
+|-------|------|---------|
+| `slug` | string | Identifier (e.g. `blog`, `auth`, `infra`) |
+| `name` | string | Human-readable name |
+| `intent` | string | Design intent — what this area is for and why it exists |
+| `principles` | string[] | Design principles that must be respected |
+| `decisions` | `{what, why}[]` | Architectural decisions made in this area |
+| `file_patterns` | string[] | Glob patterns matching files in this room |
+
+### Example rooms
+
+**Good intent** (specific, constraining):
+> "The blog exists for AI persona reflections and project chronicles — not corporate marketing. Posts must be authored by personas, not anonymous. Categories are persona-led themes, not topic tags."
+
+**Bad intent** (generic, useless):
+> "Blog functionality for the website."
+
+### Creating a room
+
+```bash
+mempalace room create blog \
+  --name "Blog" \
+  --intent "AI persona reflections and project chronicles. Posts authored by personas." \
+  --patterns "app/blog/**,app/api/blog/**" \
+  --principles "Persona-authored content only,No anonymous posts"
+```
+
+Or via MCP: `palace_room_intent`
+
+### Using rooms in /store
+
+When storing a memory, assign it to a room via `metadata.room`:
+
+```json
+{
+  "metadata": { "room": "blog" }
+}
+```
+
+Or via MCP `save` tool: pass `room: "blog"` parameter.
+
+### Legacy room state (local .palace/palace-state.json)
 
 ```json
 {
   "rooms": {
-    "auth": {
-      "name": "Authentication",
-      "memories": ["mem-001", "mem-003"]
-    },
-    "frontend": {
-      "name": "Frontend",
-      "memories": ["mem-002"]
-    }
+    "auth": { "name": "Authentication", "memories": ["mem-001"] },
+    "frontend": { "name": "Frontend", "memories": ["mem-002"] }
   }
 }
 ```
+
+The database-backed rooms API supersedes this for new deployments.
 
 ---
 
@@ -1191,6 +1264,63 @@ DELETE /api/agents  { "agent_name": "chatgpt" }                          → rev
 ```
 
 Permissions: `read` (recall only), `write` (recall + store), `admin` (full access).
+
+### POST /api/rooms — Create or update a room
+
+Auth: `Bearer <palace_id>` or `Bearer gk_<guest_key>` (write or admin).
+
+```json
+{
+  "slug": "blog",
+  "name": "Blog",
+  "intent": "AI persona reflections and chronicles",
+  "principles": ["Persona-authored content only"],
+  "decisions": [{"what": "Persona-led categories", "why": "Reflects authorship intent"}],
+  "file_patterns": ["app/blog/**", "app/api/blog/**"]
+}
+```
+
+Returns `{ success, room }`.
+
+### GET /api/rooms — List rooms
+
+Auth: `Bearer <palace_id>` or `Bearer gk_<guest_key>`. Returns `{ success, rooms }` with `memory_count` and `last_activity` per room.
+
+### GET /api/rooms/:slug — Single room with linked memories
+
+Auth as above. Query param `?limit=10`. Returns `{ success, room, memories }`.
+
+### GET /api/rooms/match — Match files to rooms
+
+```
+GET /api/rooms/match?auth=<key>&files=app/blog/page.js,app/api/blog/route.js
+```
+
+Returns `{ success, matches: [{ file, rooms: [{slug, name, intent, principles, decisions}] }] }`.
+
+### POST /api/search — Semantic or keyword search
+
+Auth: `Bearer <palace_id>` or `Bearer gk_<guest_key>`.
+
+```json
+{
+  "embedding": [0.123, ...],  // number[768] — semantic search (from CLI)
+  "query": "authentication",  // fallback keyword search (for web agents)
+  "room": "auth",             // optional room filter
+  "limit": 10,
+  "threshold": 0.7            // optional similarity cutoff (semantic only)
+}
+```
+
+Returns `{ success, mode: "semantic"|"keyword", memories: [{short_id, agent, session_name, room_slug, created_at, similarity?}] }`.
+
+### PATCH /api/memories/embed — Update embedding for a memory (backfill)
+
+Auth: `Bearer <palace_id>` (owner only). Body: `{ short_id, embedding: number[768] }`. Returns `{ success, short_id }`.
+
+### GET /api/memories/embed — List memories without embeddings
+
+Auth: `Bearer <palace_id>`. Query param `?limit=50`. Returns `{ success, memories, count }`.
 
 ### GET /api/blog/posts — List published blog posts (no auth)
 

@@ -191,6 +191,71 @@ export async function POST(req) {
     // Add visual_prompt to personas table
     await client.query(`ALTER TABLE personas ADD COLUMN IF NOT EXISTS visual_prompt text;`)
 
+    // pgvector extension (Supabase supports natively)
+    await client.query(`CREATE EXTENSION IF NOT EXISTS vector;`)
+
+    // Rooms table
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS rooms (
+        id uuid DEFAULT gen_random_uuid() PRIMARY KEY,
+        palace_id uuid NOT NULL REFERENCES palaces(id) ON DELETE CASCADE,
+        slug text NOT NULL,
+        name text NOT NULL,
+        intent text,
+        principles text[] DEFAULT '{}',
+        decisions jsonb DEFAULT '[]',
+        file_patterns text[] DEFAULT '{}',
+        created_at timestamptz DEFAULT now(),
+        updated_at timestamptz DEFAULT now(),
+        UNIQUE(palace_id, slug)
+      );
+    `)
+    await client.query(`ALTER TABLE rooms ENABLE ROW LEVEL SECURITY;`)
+
+    await client.query(`
+      DO $$
+      BEGIN
+        IF NOT EXISTS (
+            SELECT 1 FROM pg_policies WHERE tablename = 'rooms' AND policyname = 'Users can manage rooms in their own palaces'
+        ) THEN
+            CREATE POLICY "Users can manage rooms in their own palaces"
+            ON rooms FOR ALL
+            TO authenticated
+            USING (
+              EXISTS (
+                SELECT 1 FROM palaces WHERE palaces.id = rooms.palace_id AND palaces.owner_id = auth.uid()
+              )
+            )
+            WITH CHECK (
+              EXISTS (
+                SELECT 1 FROM palaces WHERE palaces.id = rooms.palace_id AND palaces.owner_id = auth.uid()
+              )
+            );
+        END IF;
+      END
+      $$;
+    `)
+
+    // New columns on memories
+    await client.query(`ALTER TABLE memories ADD COLUMN IF NOT EXISTS room_slug text;`)
+    await client.query(`ALTER TABLE memories ADD COLUMN IF NOT EXISTS embedding vector(768);`)
+
+    // HNSW index (works with zero rows, better recall than IVFFlat)
+    await client.query(`
+      CREATE INDEX IF NOT EXISTS memories_embedding_hnsw_idx
+        ON memories USING hnsw (embedding vector_cosine_ops);
+    `)
+
+    // Backfill room_slug from existing plaintext payloads
+    await client.query(`
+      UPDATE memories
+      SET room_slug = (ciphertext::jsonb -> 'metadata' ->> 'room')
+      WHERE room_slug IS NULL
+        AND ciphertext IS NOT NULL
+        AND ciphertext LIKE '{%'
+        AND (ciphertext::jsonb -> 'metadata' ->> 'room') IS NOT NULL;
+    `)
+
     await client.query("NOTIFY pgrst, 'reload schema';")
 
     return NextResponse.json({ success: true, message: 'Migrations applied successfully' })
