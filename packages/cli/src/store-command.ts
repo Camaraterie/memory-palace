@@ -6,8 +6,13 @@ import fs from 'fs';
 // Add validation before generating image
 function validatePromptFormat(prompt: string): { valid: boolean; errors: string[] } {
     const errors: string[] = [];
+
+    // Accept both '3×3' (Unicode ×) and '3x3' (ASCII x)
+    if (!/3[x×]3/i.test(prompt)) {
+        errors.push('Missing: 3×3 grid');
+    }
+
     const required = [
-        '3×3 grid',
         'TOP-LEFT PANEL',
         'TOP-CENTER PANEL',
         'TOP-RIGHT PANEL',
