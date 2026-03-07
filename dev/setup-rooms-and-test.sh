@@ -4,7 +4,7 @@
 set -e
 
 PALACE_ID="7a5c5dd2-093e-4b66-b3ce-b026076e87a1"
-API="https://m.cuer.ai"
+API="https://memory-palace-2nceak3o8-cuer-team.vercel.app"
 
 echo "==> Seeding rooms..."
 
