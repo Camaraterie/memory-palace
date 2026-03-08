@@ -120,11 +120,9 @@ export default function BlogManager({ palace, initialPosts, memories }) {
 
       const res = await fetch('/api/blog/posts', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${palace.id}`,
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
+          palace_id: palace.id,
           slug,
           title: data.title,
           subtitle: data.subtitle || null,
@@ -158,11 +156,8 @@ export default function BlogManager({ palace, initialPosts, memories }) {
     try {
       const res = await fetch(`/api/blog/posts/${slug}/publish`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${palace.id}`,
-        },
-        body: JSON.stringify({ action }),
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ palace_id: palace.id, action }),
       })
 
       const result = await res.json()
@@ -189,10 +184,10 @@ export default function BlogManager({ palace, initialPosts, memories }) {
       const formData = new FormData()
       formData.append('image', file)
       formData.append('slug', slug)
+      formData.append('palace_id', palace.id)
 
       const res = await fetch('/api/blog/upload-cover', {
         method: 'POST',
-        headers: { 'Authorization': `Bearer ${palace.id}` },
         body: formData,
       })
 
@@ -218,11 +213,8 @@ export default function BlogManager({ palace, initialPosts, memories }) {
     try {
       const res = await fetch('/api/palace/visualize', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${palace.id}`,
-        },
-        body: JSON.stringify({ scope: 'blog', target_id: slug }),
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ scope: 'blog', target_id: slug, palace_id: palace.id }),
       })
 
       const result = await res.json()

@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { createSupabaseAdmin } from '../../../lib/supabase'
+import { resolveAuth } from '../../../lib/auth'
 
 const CORS_HEADERS = {
   'Access-Control-Allow-Origin': '*',
@@ -11,37 +12,24 @@ export async function OPTIONS() {
   return new NextResponse(null, { status: 204, headers: CORS_HEADERS })
 }
 
-async function resolvePalaceId(supabase, token) {
-  if (!token.startsWith('gk_')) return null
-  const { data: agent, error } = await supabase
-    .from('agents')
-    .select('palace_id, active')
-    .eq('guest_key', token)
-    .single()
-  if (error || !agent || !agent.active) return null
-  return agent.palace_id
-}
-
 // GET /api/personas — list personas (auth required)
 export async function GET(request) {
   try {
     const supabase = createSupabaseAdmin()
 
-    const authHeader = request.headers.get('authorization')
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      return NextResponse.json({ error: 'Authorization required' }, { status: 401, headers: CORS_HEADERS })
-    }
+    const { searchParams } = new URL(request.url)
+    // Session path: ?palace_id=<uuid> (no token needed, session cookie used)
+    const palaceIdParam = searchParams.get('palace_id')
 
-    const token = authHeader.split(' ')[1]
-    const palaceId = await resolvePalaceId(supabase, token)
-    if (!palaceId) {
-      return NextResponse.json({ error: 'Invalid or inactive token' }, { status: 403, headers: CORS_HEADERS })
+    const auth = await resolveAuth(request, palaceIdParam)
+    if (!auth) {
+      return NextResponse.json({ error: 'Authorization required' }, { status: 401, headers: CORS_HEADERS })
     }
 
     const { data: personas, error } = await supabase
       .from('personas')
       .select('id, name, role, focus_areas, tone, avatar_description, visual_prompt, active, created_at')
-      .eq('palace_id', palaceId)
+      .eq('palace_id', auth.palace_id)
       .eq('active', true)
       .order('created_at', { ascending: true })
 
@@ -59,18 +47,14 @@ export async function POST(request) {
   try {
     const supabase = createSupabaseAdmin()
 
-    const authHeader = request.headers.get('authorization')
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    // Read body first so palace_id is available for session auth path
+    const body = await request.json()
+
+    const auth = await resolveAuth(request, body.palace_id)
+    if (!auth) {
       return NextResponse.json({ error: 'Authorization required' }, { status: 401, headers: CORS_HEADERS })
     }
 
-    const token = authHeader.split(' ')[1]
-    const palaceId = await resolvePalaceId(supabase, token)
-    if (!palaceId) {
-      return NextResponse.json({ error: 'Invalid or inactive token' }, { status: 403, headers: CORS_HEADERS })
-    }
-
-    const body = await request.json()
     const { name, role, focus_areas, tone, avatar_description, visual_prompt, active = true } = body
 
     if (!name || !role) {
@@ -80,7 +64,7 @@ export async function POST(request) {
     const { data: persona, error } = await supabase
       .from('personas')
       .insert({
-        palace_id: palaceId,
+        palace_id: auth.palace_id,
         name,
         role,
         focus_areas: focus_areas || [],
@@ -106,18 +90,14 @@ export async function PUT(request) {
   try {
     const supabase = createSupabaseAdmin()
 
-    const authHeader = request.headers.get('authorization')
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    // Read body first so palace_id is available for session auth path
+    const body = await request.json()
+
+    const auth = await resolveAuth(request, body.palace_id)
+    if (!auth) {
       return NextResponse.json({ error: 'Authorization required' }, { status: 401, headers: CORS_HEADERS })
     }
 
-    const token = authHeader.split(' ')[1]
-    const palaceId = await resolvePalaceId(supabase, token)
-    if (!palaceId) {
-      return NextResponse.json({ error: 'Invalid or inactive token' }, { status: 403, headers: CORS_HEADERS })
-    }
-
-    const body = await request.json()
     const { id, name, role, focus_areas, tone, avatar_description, visual_prompt, active } = body
 
     if (!id) {
@@ -137,7 +117,7 @@ export async function PUT(request) {
       .from('personas')
       .update(updateData)
       .eq('id', id)
-      .eq('palace_id', palaceId)
+      .eq('palace_id', auth.palace_id)
       .select()
       .single()
 

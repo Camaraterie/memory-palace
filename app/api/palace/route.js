@@ -1,35 +1,20 @@
 import { NextResponse } from 'next/server'
 import { v4 as uuidv4 } from 'uuid'
 import { createSupabaseAdmin } from '../../../lib/supabase'
+import { resolveAuth } from '../../../lib/auth'
 
 const HELP_URL = 'https://m.cuer.ai/api/troubleshoot'
-
-async function resolveAuth(supabase, authHeader, queryAuth) {
-    const token = queryAuth || (authHeader && authHeader.startsWith('Bearer ') ? authHeader.split(' ')[1] : null)
-    if (!token) return null
-
-    if (token.startsWith('gk_')) {
-        const { data, error } = await supabase
-            .from('agents')
-            .select('palace_id, permissions, active, agent_name')
-            .eq('guest_key', token)
-            .single()
-        if (error || !data || !data.active) return null
-        return { palace_id: data.palace_id, permissions: data.permissions, agent_name: data.agent_name, via: 'guest_key' }
-    }
-
-    return null
-}
 
 export async function GET(request) {
     try {
         const supabase = createSupabaseAdmin()
 
-        const authHeader = request.headers.get('authorization')
         const { searchParams } = new URL(request.url)
-        const queryAuth = searchParams.get('auth')
+        // Session path: ?palace_id=<uuid> (no token needed, session cookie used)
+        // gk_ path: ?auth=gk_<token> or Authorization: Bearer gk_<token>
+        const palaceIdParam = searchParams.get('palace_id')
 
-        const auth = await resolveAuth(supabase, authHeader, queryAuth)
+        const auth = await resolveAuth(request, palaceIdParam)
         if (!auth) {
             return NextResponse.json(
                 {

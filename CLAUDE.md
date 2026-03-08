@@ -84,6 +84,38 @@ palace_room_intent → create or update a room's constraints
 
 These are semantically equivalent to the CLI commands above. Use whichever is available in your environment.
 
+## Authentication Model
+
+Two caller types, one shared helper (`lib/auth.js`), no overlap:
+
+| Caller | Mechanism | Notes |
+|--------|-----------|-------|
+| External (CLI, agents) | `gk_` token via `Authorization: Bearer gk_<token>` or `?auth=gk_<token>` | Always for programmatic callers |
+| Dashboard (browser) | Supabase session cookie + palace ownership check | `/dashboard` routes only |
+
+**The session path:** Supabase middleware protects all `/dashboard` routes. API routes additionally verify `palaces.owner_id = user.id`. Session always grants `permissions: 'admin'`.
+
+**`palace_id` is never accepted as auth.** It is used only as an identifier, verified against ownership.
+
+**Usage in a route:**
+```js
+import { resolveAuth } from '../../../lib/auth'
+
+// For routes where palace_id comes from body — read body FIRST:
+const body = await request.json()
+const auth = await resolveAuth(request, body.palace_id)
+
+// For routes where palace_id comes from query params:
+const palaceIdParam = searchParams.get('palace_id')
+const auth = await resolveAuth(request, palaceIdParam)
+
+if (!auth) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+```
+
+**Dashboard components** pass `palace_id` in the request body or query string — never in `Authorization: Bearer`. No credentials appear in client-side JS.
+
+Routes NOT using session auth (gk_ only, not called from dashboard): `/api/store`, `/api/secure-store`, `/api/recall`, `/api/search`, `/api/upload`, `/api/memories/embed`, `/api/agents`, `/api/palace/agents`, `/api/rooms`, `/api/rooms/match`, `/api/blog/drafts`, `/api/context`, `/api/ingest`.
+
 ## Storing Memories
 
 When asked to store or save a memory, **always use `mempalace store`**, never `mempalace save`. The `save` command has been removed.

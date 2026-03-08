@@ -1,47 +1,34 @@
 import { NextResponse } from 'next/server'
 import { createSupabaseAdmin } from '../../../../lib/supabase'
+import { resolveAuth } from '../../../../lib/auth'
 
 export async function POST(request) {
   try {
-    const authHeader = request.headers.get('authorization')
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      return NextResponse.json({ error: 'Authorization required' }, { status: 401 })
-    }
-
-    const token = authHeader.split(' ')[1]
-
-    // Require admin gk_ — owner only
-    if (!token.startsWith('gk_')) {
-      return NextResponse.json({ error: 'Admin key required.' }, { status: 403 })
-    }
-
-    const supabase = createSupabaseAdmin()
-
-    const { data: agent, error: agentError } = await supabase
-      .from('agents')
-      .select('palace_id, permissions, active')
-      .eq('guest_key', token)
-      .single()
-
-    if (agentError || !agent || !agent.active) {
-      return NextResponse.json({ error: 'Invalid or inactive key' }, { status: 403 })
-    }
-    if (agent.permissions !== 'admin') {
-      return NextResponse.json({ error: 'Admin permission required.' }, { status: 403 })
-    }
-    const palace = { id: agent.palace_id }
-
+    // Read formData first — body can only be consumed once.
+    // palace_id is passed as a FormData field from the dashboard session path.
     const formData = await request.formData()
     const image = formData.get('image')
     const slug = formData.get('slug')
+    const palaceIdField = formData.get('palace_id') || null
+
+    // resolveAuth only reads request.headers and request.url, not body — safe to call after formData
+    const auth = await resolveAuth(request, palaceIdField)
+    if (!auth) {
+      return NextResponse.json({ error: 'Authorization required' }, { status: 401 })
+    }
+    if (auth.permissions !== 'admin') {
+      return NextResponse.json({ error: 'Admin permission required.' }, { status: 403 })
+    }
 
     if (!image || !slug) {
       return NextResponse.json({ error: 'Missing image or slug parameter' }, { status: 400 })
     }
 
+    const supabase = createSupabaseAdmin()
+
     const buffer = Buffer.from(await image.arrayBuffer())
     const ext = (image.name || 'image.png').split('.').pop() || 'png'
-    const filePath = `${palace.id}/blog/${slug}.${ext}`
+    const filePath = `${auth.palace_id}/blog/${slug}.${ext}`
 
     const { error: uploadError } = await supabase
       .storage
@@ -68,7 +55,7 @@ export async function POST(request) {
       .from('blog_posts')
       .update({ cover_image: imageUrl, updated_at: new Date().toISOString() })
       .eq('slug', slug)
-      .eq('palace_id', palace.id)
+      .eq('palace_id', auth.palace_id)
 
     if (updateError) {
       console.error('Cover update error:', updateError)
