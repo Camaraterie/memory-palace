@@ -131,6 +131,24 @@ mempalace store <prompt_file.txt> <payload.json>
 
 Never use `save`. Never call the API directly. Always use `store`.
 
+## Secret Scanning — Required Setup
+
+This repo uses a pre-commit hook to block secrets, API keys, and tokens before they reach GitHub. **Run this once after cloning (or after updates):**
+
+```bash
+bash scripts/install-hooks.sh
+```
+
+The hook runs automatically on every `git commit`. It uses `gitleaks` if installed (preferred), or a grep-based fallback. The GitHub Actions workflow (`.github/workflows/secret-scan.yml`) provides a second layer on every push.
+
+**Install gitleaks for full coverage** (the grep fallback is limited):
+- macOS: `brew install gitleaks`
+- WSL2/Linux: download from https://github.com/gitleaks/gitleaks/releases → place in `/usr/local/bin/gitleaks`
+
+**What is blocked:** `gk_` guest keys, Supabase service role keys, Google/Gemini API keys, AWS keys, GitHub tokens, Stripe keys, private key PEM blocks.
+
+**Never use `git commit --no-verify`** unless you have confirmed no secrets are staged and you understand why the hook is failing.
+
 ## Git — Commit & Push at Each Milestone
 
 Single canonical remote: `origin` → `github.com/Camaraterie/memory-palace`
