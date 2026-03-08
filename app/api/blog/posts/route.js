@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { createSupabaseAdmin } from '../../../../lib/supabase'
+import { resolveAuth } from '../../../../lib/auth'
 
 const CORS_HEADERS = {
   'Access-Control-Allow-Origin': '*',
@@ -52,34 +53,19 @@ export async function POST(request) {
   try {
     const supabase = createSupabaseAdmin()
 
-    // Auth: palace_id or guest_key with write permission
-    const authHeader = request.headers.get('authorization')
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    // Read body first so palace_id is available for session auth path
+    const body = await request.json()
+
+    const auth = await resolveAuth(request, body.palace_id)
+    if (!auth) {
       return NextResponse.json({ error: 'Authorization required' }, { status: 401, headers: CORS_HEADERS })
     }
-
-    const token = authHeader.split(' ')[1]
-    let palaceId = null
-    let isOwner = false
-
-    if (!token.startsWith('gk_')) {
-      return NextResponse.json({ error: 'Authorization required' }, { status: 403, headers: CORS_HEADERS })
-    }
-    const { data: agent, error } = await supabase
-      .from('agents')
-      .select('palace_id, permissions, active')
-      .eq('guest_key', token)
-      .single()
-    if (error || !agent || !agent.active) {
-      return NextResponse.json({ error: 'Invalid or inactive guest key' }, { status: 403, headers: CORS_HEADERS })
-    }
-    if (!['write', 'admin'].includes(agent.permissions)) {
+    if (!['write', 'admin'].includes(auth.permissions)) {
       return NextResponse.json({ error: 'Insufficient permissions' }, { status: 403, headers: CORS_HEADERS })
     }
-    palaceId = agent.palace_id
-    if (agent.permissions === 'admin') isOwner = true
 
-    const body = await request.json()
+    const palaceId = auth.palace_id
+    const isOwner = auth.permissions === 'admin'
     const { slug, title, content, subtitle, excerpt, author_persona, cover_image, status, tags, source_memories, show_provenance, social_variants, metadata } = body
 
     if (!slug || !title || !content) {

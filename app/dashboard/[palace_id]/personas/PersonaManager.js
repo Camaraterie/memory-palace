@@ -67,9 +67,7 @@ export default function PersonaManager({ palace, initialPersonas }) {
 
   const fetchPersonas = useCallback(async () => {
     try {
-      const res = await fetch('/api/personas', {
-        headers: { 'Authorization': `Bearer ${palace.id}` }
-      })
+      const res = await fetch(`/api/personas?palace_id=${palace.id}`)
       const data = await res.json()
       if (data.success) {
         setPersonas(data.personas)
@@ -84,7 +82,8 @@ export default function PersonaManager({ palace, initialPersonas }) {
     try {
       const res = await fetch('/api/personas/seed', {
         method: 'POST',
-        headers: { 'Authorization': `Bearer ${palace.id}` }
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ palace_id: palace.id }),
       })
       const data = await res.json()
       if (data.success) {
@@ -115,11 +114,8 @@ export default function PersonaManager({ palace, initialPersonas }) {
 
       const res = await fetch('/api/personas', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${palace.id}`,
-        },
-        body: JSON.stringify(body),
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...body, palace_id: palace.id }),
       })
 
       const data = await res.json()
@@ -156,11 +152,8 @@ export default function PersonaManager({ palace, initialPersonas }) {
 
       const res = await fetch('/api/personas', {
         method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${palace.id}`,
-        },
-        body: JSON.stringify(body),
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...body, palace_id: palace.id }),
       })
 
       const data = await res.json()
@@ -186,11 +179,8 @@ export default function PersonaManager({ palace, initialPersonas }) {
     try {
       const res = await fetch('/api/personas', {
         method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${palace.id}`,
-        },
-        body: JSON.stringify({ id, active: false }),
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id, active: false, palace_id: palace.id }),
       })
 
       const data = await res.json()

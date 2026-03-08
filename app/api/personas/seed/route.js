@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { createSupabaseAdmin } from '../../../../lib/supabase'
+import { resolveAuth } from '../../../../lib/auth'
 
 const INITIAL_PERSONAS = [
   {
@@ -66,26 +67,15 @@ export async function POST(request) {
   try {
     const supabase = createSupabaseAdmin()
 
-    const authHeader = request.headers.get('authorization')
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    // Read body first so palace_id is available for session auth path
+    const body = await request.json().catch(() => ({}))
+
+    const auth = await resolveAuth(request, body.palace_id)
+    if (!auth) {
       return NextResponse.json({ error: 'Authorization required' }, { status: 401, headers: CORS_HEADERS })
     }
 
-    const token = authHeader.split(' ')[1]
-    let palaceId = null
-
-    if (!token.startsWith('gk_')) {
-      return NextResponse.json({ error: 'Authorization required' }, { status: 403, headers: CORS_HEADERS })
-    }
-    const { data: agent, error: agentError } = await supabase
-      .from('agents')
-      .select('palace_id, active')
-      .eq('guest_key', token)
-      .single()
-    if (agentError || !agent || !agent.active) {
-      return NextResponse.json({ error: 'Invalid or inactive guest key' }, { status: 403, headers: CORS_HEADERS })
-    }
-    palaceId = agent.palace_id
+    const palaceId = auth.palace_id
 
     // Check if personas already exist for this palace
     const { data: existing, error: checkError } = await supabase

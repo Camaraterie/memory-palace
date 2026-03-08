@@ -20,10 +20,7 @@ export default function PalaceExplorer({ palace, initialMemories }) {
         try {
             const res = await fetch('/api/palace/visualize', {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${palace.id}`,
-                },
+                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ scope: 'full', palace_id: palace.id }),
             })
             const data = await res.json()
@@ -44,7 +41,7 @@ export default function PalaceExplorer({ palace, initialMemories }) {
         const fetchPalaceData = async () => {
             setLoading(true)
             try {
-                const res = await fetch(`/api/palace?auth=${palace.id}`)
+                const res = await fetch(`/api/palace?palace_id=${palace.id}`)
                 const data = await res.json()
                 if (data.success) {
                     setPalaceData(data)
@@ -827,11 +824,9 @@ function MemoryDetail({ shortId, imageUrl, palaceId, onClose }) {
         try {
             const res = await fetch('/api/blog/posts', {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${palaceId}`,
-                },
+                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
+                    palace_id: palaceId,
                     slug,
                     title,
                     content,

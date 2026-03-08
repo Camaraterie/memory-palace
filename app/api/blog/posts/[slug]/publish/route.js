@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { createSupabaseAdmin } from '../../../../../../lib/supabase'
+import { resolveAuth } from '../../../../../../lib/auth'
 
 const CORS_HEADERS = {
   'Access-Control-Allow-Origin': '*',
@@ -17,33 +18,18 @@ export async function POST(request, { params }) {
     const { slug } = await params
     const supabase = createSupabaseAdmin()
 
-    const authHeader = request.headers.get('authorization')
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    // Read body first so palace_id is available for session auth path
+    const body = await request.json()
+
+    // Require admin permissions — owner only
+    const auth = await resolveAuth(request, body.palace_id)
+    if (!auth) {
       return NextResponse.json({ error: 'Authorization required' }, { status: 401, headers: CORS_HEADERS })
     }
-
-    const token = authHeader.split(' ')[1]
-
-    // Require admin gk_ — owner only
-    if (!token.startsWith('gk_')) {
-      return NextResponse.json({ error: 'Admin key required.' }, { status: 403, headers: CORS_HEADERS })
-    }
-
-    const { data: agent, error: agentError } = await supabase
-      .from('agents')
-      .select('palace_id, permissions, active')
-      .eq('guest_key', token)
-      .single()
-
-    if (agentError || !agent || !agent.active) {
-      return NextResponse.json({ error: 'Invalid or inactive key' }, { status: 403, headers: CORS_HEADERS })
-    }
-    if (agent.permissions !== 'admin') {
+    if (auth.permissions !== 'admin') {
       return NextResponse.json({ error: 'Admin permission required to publish.' }, { status: 403, headers: CORS_HEADERS })
     }
-    const palace = { id: agent.palace_id }
 
-    const body = await request.json()
     const { action } = body
 
     if (!['publish', 'unpublish', 'reject'].includes(action)) {
@@ -61,7 +47,7 @@ export async function POST(request, { params }) {
       return NextResponse.json({ error: 'Post not found' }, { status: 404, headers: CORS_HEADERS })
     }
 
-    if (post.palace_id !== palace.id) {
+    if (post.palace_id !== auth.palace_id) {
       return NextResponse.json({ error: 'Post does not belong to this palace' }, { status: 403, headers: CORS_HEADERS })
     }
 
