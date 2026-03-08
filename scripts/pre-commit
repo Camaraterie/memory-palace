@@ -1,0 +1,110 @@
+#!/usr/bin/env bash
+#
+# pre-commit — secret scanner
+#
+# Blocks commits containing credentials, API keys, or tokens.
+# Works in two modes:
+#   1. gitleaks (preferred) — best-in-class scanner, comprehensive patterns
+#   2. grep fallback         — covers project-specific patterns without deps
+#
+# Install: scripts/install-hooks.sh
+# Skip (emergency only): git commit --no-verify  ← this is logged and audited
+
+set -euo pipefail
+
+RED='\033[0;31m'
+YEL='\033[1;33m'
+NC='\033[0m'
+
+# ── Mode 1: gitleaks ─────────────────────────────────────────────────────────
+if command -v gitleaks &>/dev/null; then
+  if ! gitleaks protect --staged --redact 2>/dev/null; then
+    echo -e "${RED}🚨 gitleaks found secrets in staged files.${NC}"
+    echo "   Run: gitleaks protect --staged --verbose  to see details."
+    echo "   Remove all secrets. Do not use --no-verify to bypass."
+    exit 1
+  fi
+  exit 0
+fi
+
+# ── Mode 2: grep-based fallback ───────────────────────────────────────────────
+# Used when gitleaks is not installed. Install gitleaks for better coverage:
+# https://github.com/gitleaks/gitleaks
+
+STAGED=$(git diff --cached --name-only --diff-filter=ACM 2>/dev/null)
+[[ -z "$STAGED" ]] && exit 0
+
+FAIL=0
+
+# Pattern list: ERE patterns matched against staged file content
+PATTERNS=(
+  # Memory Palace guest keys (real keys are gk_ + 36+ chars)
+  'gk_[A-Za-z0-9_-]{20,}'
+
+  # Supabase
+  'SUPABASE_SERVICE_ROLE_KEY[[:space:]]*=[[:space:]]*[A-Za-z0-9._-]{20,}'
+  'SUPABASE_ANON_KEY[[:space:]]*=[[:space:]]*[A-Za-z0-9._-]{20,}'
+  # JWT-shaped Supabase keys in code (ey = base64 JWT header)
+  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9\.[A-Za-z0-9_-]{20,}'
+
+  # Google / Gemini
+  'AIza[0-9A-Za-z_-]{35}'
+  'GEMINI_API_KEY[[:space:]]*=[[:space:]]*\S{10,}'
+  'GOOGLE_API_KEY[[:space:]]*=[[:space:]]*\S{10,}'
+
+  # AWS
+  'AKIA[0-9A-Z]{16}'
+  'AWS_SECRET_ACCESS_KEY[[:space:]]*=[[:space:]]*[A-Za-z0-9/+=]{40}'
+
+  # GitHub tokens
+  'ghp_[0-9a-zA-Z]{36}'
+  'ghs_[0-9a-zA-Z]{36}'
+  'gho_[0-9a-zA-Z]{36}'
+
+  # Stripe
+  'sk_live_[0-9a-zA-Z]{24,}'
+  'rk_live_[0-9a-zA-Z]{24,}'
+
+  # npm
+  'npm_[0-9a-zA-Z]{36}'
+
+  # SendGrid
+  'SG\.[0-9A-Za-z_-]{22}\.[0-9A-Za-z_-]{43}'
+
+  # PEM private keys (split string prevents self-match in this file)
+  # shellcheck disable=SC2016
+  '-----'"BEGIN"' (RSA|EC|DSA|OPENSSH) PRIVATE KEY'
+)
+
+while IFS= read -r file; do
+  # Skip this script and other tool scripts (they contain pattern strings as literals)
+  [[ "$file" == scripts/* ]] && continue
+
+  # Skip binary files and files that don't exist in index
+  git show ":$file" &>/dev/null || continue
+  content=$(git show ":$file" 2>/dev/null)
+
+  for pattern in "${PATTERNS[@]}"; do
+    if echo "$content" | grep -qE "$pattern" 2>/dev/null; then
+      echo -e "${RED}🚨 Potential secret in: $file${NC}"
+      echo -e "   Pattern matched: ${YEL}${pattern}${NC}"
+      echo "$content" | grep -nE "$pattern" | head -3 | sed 's/^/   Line /'
+      FAIL=1
+      break
+    fi
+  done
+done <<< "$STAGED"
+
+if [[ "$FAIL" -eq 1 ]]; then
+  echo ""
+  echo -e "${RED}❌ Secret scan failed. Remove all credentials before committing.${NC}"
+  echo ""
+  echo "   Tip: Install gitleaks for more comprehensive scanning:"
+  echo "   https://github.com/gitleaks/gitleaks#installing"
+  exit 1
+fi
+
+# Warn if gitleaks is not installed — once per session
+echo -e "${YEL}⚠  Secret scan: grep fallback (gitleaks not installed — coverage limited)${NC}" >&2
+
+exit 0
