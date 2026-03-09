@@ -1246,3 +1246,28 @@ body::before {
     grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
   }
 }
+
+/* Global scrollbar — brass theme */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(26, 24, 20, 0.5);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--brass-dim);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--brass);
+}
+
+/* Firefox */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--brass-dim) rgba(26, 24, 20, 0.5);
+}
