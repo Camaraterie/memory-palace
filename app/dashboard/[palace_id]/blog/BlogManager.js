@@ -180,7 +180,17 @@ export default function BlogManager({ palace, initialPosts, memories }) {
       const res = await fetch(`/api/blog/posts/${slug}/publish`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ palace_id: palace.id, action }),
+        body: JSON.stringify({
+          palace_id: palace.id,
+          action,
+          // Carry in-flight audience so publish always persists the current selector value
+          ...(editData[slug] ? {
+            metadata: {
+              ...(posts.find(p => p.slug === slug)?.metadata || {}),
+              audience: editData[slug].audience || 'all',
+            },
+          } : {}),
+        }),
       })
 
       const result = await res.json()

@@ -30,7 +30,7 @@ export async function POST(request, { params }) {
       return NextResponse.json({ error: 'Admin permission required to publish.' }, { status: 403, headers: CORS_HEADERS })
     }
 
-    const { action } = body
+    const { action, metadata } = body
 
     if (!['publish', 'unpublish', 'reject'].includes(action)) {
       return NextResponse.json({ error: 'action must be publish, unpublish, or reject' }, { status: 400, headers: CORS_HEADERS })
@@ -53,6 +53,11 @@ export async function POST(request, { params }) {
 
     const now = new Date().toISOString()
     const update = { updated_at: now }
+
+    // Persist in-flight metadata (e.g. audience) sent from the dashboard
+    if (metadata && typeof metadata === 'object') {
+      update.metadata = metadata
+    }
 
     if (action === 'publish') {
       update.status = 'published'
