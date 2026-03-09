@@ -24,7 +24,7 @@ export async function GET(request) {
 
     let query = supabase
       .from('blog_posts')
-      .select('id, slug, title, subtitle, excerpt, author_persona, cover_image, status, tags, published_at, created_at', { count: 'exact' })
+      .select('id, slug, title, subtitle, excerpt, author_persona, cover_image, status, tags, published_at, created_at, metadata', { count: 'exact' })
       .eq('status', 'published')
       .order('published_at', { ascending: false })
       .range(offset, offset + limit - 1)
@@ -35,6 +35,11 @@ export async function GET(request) {
 
     if (tag) {
       query = query.contains('tags', [tag])
+    }
+
+    const audienceFilter = searchParams.get('audience')
+    if (audienceFilter === 'all') {
+      query = query.or('metadata->>audience.is.null,metadata->>audience.eq.all')
     }
 
     const { data: posts, error, count } = await query

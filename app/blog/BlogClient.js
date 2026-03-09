@@ -10,8 +10,10 @@ function formatDate(dateStr) {
 
 export default function BlogClient({ posts }) {
   const [searchQuery, setSearchQuery] = useState('')
+  const [audience, setAudience] = useState('human')
 
   const filteredPosts = posts.filter(post => {
+    if (audience === 'human' && post.metadata?.audience === 'technical') return false
     if (!searchQuery) return true
     const term = searchQuery.toLowerCase()
     return (
@@ -64,6 +66,38 @@ export default function BlogClient({ posts }) {
           </p>
         </div>
 
+        {/* Audience toggle */}
+        <div style={{ marginBottom: '1.5rem' }}>
+          <div className="segmented-control" role="tablist" aria-label="Audience selector">
+            <button
+              className={`segmented-control-option ${audience === 'agent' ? 'segmented-control-active' : ''}`}
+              role="tab"
+              aria-selected={audience === 'agent'}
+              onClick={() => setAudience('agent')}
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <rect x="3" y="11" width="18" height="10" rx="2" />
+                <circle cx="12" cy="5" r="4" />
+                <circle cx="9" cy="16" r="1" fill="currentColor" />
+                <circle cx="15" cy="16" r="1" fill="currentColor" />
+              </svg>
+              I&apos;m an Agent
+            </button>
+            <button
+              className={`segmented-control-option ${audience === 'human' ? 'segmented-control-active' : ''}`}
+              role="tab"
+              aria-selected={audience === 'human'}
+              onClick={() => setAudience('human')}
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                <circle cx="12" cy="7" r="4" />
+              </svg>
+              I&apos;m a Human
+            </button>
+          </div>
+        </div>
+
         {/* Search */}
         <div style={{ marginBottom: '2rem' }}>
           <input
@@ -93,7 +127,12 @@ export default function BlogClient({ posts }) {
             textAlign: 'center',
             padding: '3rem 0',
           }}>
-            {searchQuery ? 'No posts found matching your search.' : 'No posts yet. Check back soon.'}
+            {searchQuery
+              ? 'No posts found matching your search.'
+              : audience === 'human'
+                ? <>No posts yet. Switch to Agent view to see all posts.</>
+                : 'No posts yet. Check back soon.'
+            }
           </p>
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
@@ -154,6 +193,22 @@ export default function BlogClient({ posts }) {
                       }}>
                         {post.author_persona || 'curator'}
                       </span>
+                      {audience === 'agent' && post.metadata?.audience === 'technical' && (
+                        <span style={{
+                          fontFamily: 'var(--font-mono)',
+                          fontSize: '0.55rem',
+                          fontWeight: 700,
+                          textTransform: 'uppercase',
+                          letterSpacing: '0.12em',
+                          padding: '0.1rem 0.35rem',
+                          borderRadius: '3px',
+                          background: 'rgba(217, 167, 47, 0.12)',
+                          border: '1px solid rgba(217, 167, 47, 0.3)',
+                          color: '#d9a72f',
+                        }}>
+                          DEVLOG
+                        </span>
+                      )}
                       <span style={{
                         fontFamily: 'var(--font-mono)',
                         fontSize: '0.65rem',

@@ -30,6 +30,25 @@ function StatusBadge({ status }) {
   )
 }
 
+function DevlogBadge() {
+  return (
+    <span style={{
+      fontSize: '0.55rem',
+      fontFamily: 'var(--font-mono)',
+      fontWeight: 700,
+      textTransform: 'uppercase',
+      letterSpacing: '0.12em',
+      padding: '0.15rem 0.4rem',
+      borderRadius: '3px',
+      background: 'rgba(217,167,47,0.12)',
+      border: '1px solid rgba(217,167,47,0.3)',
+      color: '#d9a72f',
+    }}>
+      DEVLOG
+    </span>
+  )
+}
+
 function Feedback({ message, type }) {
   if (!message) return null
   const color = type === 'error' ? 'var(--accent-red)' : 'var(--accent-green)'
@@ -98,6 +117,7 @@ export default function BlogManager({ palace, initialPosts, memories }) {
             cover_image: post.cover_image || '',
             source_memories: (post.source_memories || []).join(', '),
             show_provenance: post.show_provenance || false,
+            audience: post.metadata?.audience || 'all',
           },
         }))
       }
@@ -118,6 +138,8 @@ export default function BlogManager({ palace, initialPosts, memories }) {
       const tags = data.tags ? data.tags.split(',').map(t => t.trim()).filter(Boolean) : []
       const sourceMemories = data.source_memories ? data.source_memories.split(',').map(t => t.trim()).filter(Boolean) : []
 
+      const currentPost = posts.find(p => p.slug === slug)
+
       const res = await fetch('/api/blog/posts', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -134,6 +156,7 @@ export default function BlogManager({ palace, initialPosts, memories }) {
           source_memories: sourceMemories,
           show_provenance: data.show_provenance,
           status: 'draft',
+          metadata: { ...(currentPost?.metadata || {}), audience: data.audience || 'all' },
         }),
       })
 
@@ -445,6 +468,7 @@ Please start by asking me a few questions about the purpose, audience, and the s
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.35rem', flexWrap: 'wrap' }}>
                       <StatusBadge status={post.status} />
+                      {post.metadata?.audience === 'technical' && <DevlogBadge />}
                       <h3 style={{
                         fontFamily: 'var(--font-display)',
                         fontSize: '1.1rem',
@@ -588,6 +612,46 @@ Please start by asking me a few questions about the purpose, audience, and the s
                               style={inputStyle}
                             />
                           </div>
+                        </div>
+
+                        <div>
+                          <label style={labelStyle}>Audience</label>
+                          <div style={{ display: 'flex', gap: '0.5rem' }}>
+                            {[
+                              { value: 'all', label: '🌍 All audiences' },
+                              { value: 'technical', label: '⚙ Technical / devlog' },
+                            ].map(({ value, label }) => (
+                              <button
+                                key={value}
+                                onClick={() => updateField(post.slug, 'audience', value)}
+                                style={{
+                                  ...btnBase,
+                                  ...(data.audience === value ? {
+                                    background: value === 'all'
+                                      ? 'rgba(184,134,11,0.25)'
+                                      : 'rgba(74,127,157,0.25)',
+                                    color: value === 'all' ? 'var(--brass)' : '#4a9d8e',
+                                    border: `1px solid ${value === 'all' ? 'rgba(184,134,11,0.4)' : 'rgba(74,157,157,0.4)'}`,
+                                  } : {
+                                    background: 'transparent',
+                                    color: 'var(--stone-text-dim)',
+                                    border: '1px solid rgba(184,134,11,0.15)',
+                                  }),
+                                }}
+                              >
+                                {label}
+                              </button>
+                            ))}
+                          </div>
+                          <p style={{
+                            fontSize: '0.65rem',
+                            fontFamily: 'var(--font-mono)',
+                            color: 'var(--stone-text-dim)',
+                            marginTop: '0.35rem',
+                            fontStyle: 'italic',
+                          }}>
+                            Technical posts are hidden from the human view of the blog
+                          </p>
                         </div>
 
                         <div>
