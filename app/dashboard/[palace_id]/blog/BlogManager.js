@@ -68,7 +68,7 @@ function Feedback({ message, type }) {
   )
 }
 
-export default function BlogManager({ palace, initialPosts, memories }) {
+export default function BlogManager({ palace, initialPosts, memories, assetImages = [] }) {
   const [posts, setPosts] = useState(initialPosts)
   const [filter, setFilter] = useState('all')
   const [expandedSlug, setExpandedSlug] = useState(null)
@@ -76,10 +76,27 @@ export default function BlogManager({ palace, initialPosts, memories }) {
   const [feedback, setFeedback] = useState({})
   const [confirmAction, setConfirmAction] = useState(null)
   const [saving, setSaving] = useState({})
-  const [memoryPickerSlug, setMemoryPickerSlug] = useState(null)
+  const [coverImageInput, setCoverImageInput] = useState({})
   const fileInputRef = useRef(null)
 
   const memoriesWithImages = (memories || []).filter(m => m.image_url)
+  const memoryByShortId = memoriesWithImages.reduce((acc, memory) => {
+    if (memory?.short_id) acc[memory.short_id] = memory
+    return acc
+  }, {})
+
+  const dedupeByUrl = (items) => {
+    const seen = new Set()
+    return items.filter((item) => {
+      const url = item?.image_url
+      if (!url) return false
+      if (seen.has(url)) return false
+      seen.add(url)
+      return true
+    })
+  }
+
+  const recentReusableAssets = dedupeByUrl(assetImages || [])
 
   const showFeedback = useCallback((slug, message, type = 'success') => {
     setFeedback(prev => ({ ...prev, [slug]: { message, type } }))
@@ -105,6 +122,13 @@ export default function BlogManager({ palace, initialPosts, memories }) {
       setExpandedSlug(slug)
       const post = posts.find(p => p.slug === slug)
       if (post && !editData[slug]) {
+        const sourceIds = post.source_memories || []
+        const sourceMemoryImages = sourceIds
+          .map((id) => memoryByShortId[id])
+          .filter(Boolean)
+
+        const resolvedCover = post.cover_image || sourceMemoryImages[0]?.image_url || ''
+
         setEditData(prev => ({
           ...prev,
           [slug]: {
@@ -114,8 +138,8 @@ export default function BlogManager({ palace, initialPosts, memories }) {
             excerpt: post.excerpt || '',
             tags: (post.tags || []).join(', '),
             author_persona: post.author_persona || 'curator',
-            cover_image: post.cover_image || '',
-            source_memories: (post.source_memories || []).join(', '),
+            cover_image: resolvedCover,
+            source_memories: sourceIds.join(', '),
             show_provenance: post.show_provenance || false,
             audience: post.metadata?.audience || 'all',
           },
@@ -242,19 +266,24 @@ export default function BlogManager({ palace, initialPosts, memories }) {
 
   const handleAutoGenerateCover = async (slug) => {
     setSaving(prev => ({ ...prev, [slug]: true }))
-    showFeedback(slug, 'Generating deep state cover...', 'success')
+    showFeedback(slug, 'Generating memory-comic cover...', 'success')
     try {
       const res = await fetch('/api/palace/visualize', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ scope: 'blog', target_id: slug, palace_id: palace.id }),
+        body: JSON.stringify({
+          scope: 'blog',
+          target_id: slug,
+          palace_id: palace.id,
+          style_mode: 'memory_comic',
+        }),
       })
 
       const result = await res.json()
       if (result.success) {
         updateField(slug, 'cover_image', result.image_url)
         setPosts(prev => prev.map(p => p.slug === slug ? { ...p, cover_image: result.image_url } : p))
-        showFeedback(slug, 'Deep AI Cover generated successfully!')
+        showFeedback(slug, 'Memory-comic cover generated successfully!')
       } else {
         showFeedback(slug, result.error || 'Generation failed', 'error')
       }
@@ -263,6 +292,80 @@ export default function BlogManager({ palace, initialPosts, memories }) {
     } finally {
       setSaving(prev => ({ ...prev, [slug]: false }))
     }
+  }
+
+  const appendSourceMemory = (slug, shortId) => {
+    if (!shortId) return
+    const current = editData[slug]?.source_memories || ''
+    const ids = current
+      .split(',')
+      .map(id => id.trim())
+      .filter(Boolean)
+
+    if (!ids.includes(shortId)) {
+      updateField(slug, 'source_memories', [...ids, shortId].join(', '))
+    }
+  }
+
+  const applyCoverImage = (slug, imageUrl, options = {}) => {
+    if (!imageUrl) return
+    updateField(slug, 'cover_image', imageUrl)
+    setPosts(prev => prev.map(p => p.slug === slug ? { ...p, cover_image: imageUrl } : p))
+
+    if (options.shortId) {
+      appendSourceMemory(slug, options.shortId)
+    }
+
+    if (options.message) {
+      showFeedback(slug, options.message)
+    }
+  }
+
+  const extractMemoryShortId = (rawValue) => {
+    const value = (rawValue || '').trim()
+    if (!value) return null
+
+    const direct = value.match(/^[a-z0-9]{7}$/i)
+    if (direct) return direct[0].toLowerCase()
+
+    const fromPath = value.match(/\/q\/([a-z0-9]{7})(?:\/|$|\?)/i)
+    if (fromPath) return fromPath[1].toLowerCase()
+
+    return null
+  }
+
+  const handleAddCoverFromInput = (slug) => {
+    const raw = (coverImageInput[slug] || '').trim()
+    if (!raw) {
+      showFeedback(slug, 'Paste a short_id, memory URL, or image URL first', 'error')
+      return
+    }
+
+    const shortId = extractMemoryShortId(raw)
+    if (shortId) {
+      applyCoverImage(slug, `https://m.cuer.ai/q/${shortId}/image`, {
+        shortId,
+        message: `Cover image set from memory ${shortId}`,
+      })
+      setCoverImageInput(prev => ({ ...prev, [slug]: '' }))
+      return
+    }
+
+    if (/^https?:\/\//i.test(raw)) {
+      applyCoverImage(slug, raw, { message: 'Cover image URL applied' })
+      setCoverImageInput(prev => ({ ...prev, [slug]: '' }))
+      return
+    }
+
+    showFeedback(slug, 'Could not parse input. Use short_id, /q/<id>, or full image URL', 'error')
+  }
+
+  const handleUseMemoryImage = (slug, memory) => {
+    if (!memory?.image_url) return
+    applyCoverImage(slug, memory.image_url, {
+      shortId: memory.short_id,
+      message: `Cover image set from memory ${memory.short_id}`,
+    })
   }
 
   const handleTwoClickAction = (slug, action) => {
@@ -459,6 +562,19 @@ Please start by asking me a few questions about the purpose, audience, and the s
             const fb = feedback[post.slug]
             const isSaving = saving[post.slug]
             const previewBlocks = data.content ? parseMarkdown(data.content) : []
+
+            const sourceIds = typeof data.source_memories === 'string'
+              ? data.source_memories.split(',').map(id => id.trim()).filter(Boolean)
+              : (post.source_memories || [])
+
+            const sourceLinkedImages = sourceIds
+              .map((id) => memoryByShortId[id])
+              .filter(Boolean)
+
+            const reusableAssetsForPost = dedupeByUrl([
+              ...sourceLinkedImages,
+              ...recentReusableAssets,
+            ]).slice(0, 18)
 
             return (
               <div key={post.slug} className="stone-card" style={{ padding: 0, overflow: 'hidden' }}>
@@ -671,7 +787,7 @@ Please start by asking me a few questions about the purpose, audience, and the s
                               type="text"
                               value={data.cover_image || ''}
                               onChange={e => updateField(post.slug, 'cover_image', e.target.value)}
-                              placeholder="URL or upload"
+                              placeholder="Direct image URL"
                               style={{ ...inputStyle, flex: 1 }}
                             />
                             <input
@@ -694,21 +810,6 @@ Please start by asking me a few questions about the purpose, audience, and the s
                             >
                               Upload
                             </button>
-                            {memoriesWithImages.length > 0 && (
-                              <button
-                                onClick={() => setMemoryPickerSlug(post.slug)}
-                                disabled={isSaving}
-                                style={{
-                                  ...btnBase,
-                                  background: 'rgba(184,134,11,0.1)',
-                                  border: '1px solid var(--brass-dim)',
-                                  color: 'var(--brass)',
-                                  flexShrink: 0,
-                                }}
-                              >
-                                Memories
-                              </button>
-                            )}
                             <button
                               onClick={() => handleAutoGenerateCover(post.slug)}
                               disabled={isSaving}
@@ -720,9 +821,171 @@ Please start by asking me a few questions about the purpose, audience, and the s
                                 flexShrink: 0,
                               }}
                             >
-                              ✨ Deep AI Cover
+                              ✨ Memory Comic Cover
                             </button>
                           </div>
+
+                          <div style={{ marginTop: '0.65rem' }}>
+                            <div style={{
+                              display: 'flex',
+                              gap: '0.5rem',
+                              alignItems: 'center',
+                            }}>
+                              <input
+                                type="text"
+                                value={coverImageInput[post.slug] || ''}
+                                onChange={e => setCoverImageInput(prev => ({ ...prev, [post.slug]: e.target.value }))}
+                                placeholder="Paste memory short_id, /q/<id>, or image URL"
+                                style={{ ...inputStyle, flex: 1 }}
+                              />
+                              <button
+                                onClick={() => handleAddCoverFromInput(post.slug)}
+                                disabled={isSaving}
+                                style={{
+                                  ...btnBase,
+                                  background: 'rgba(184,134,11,0.12)',
+                                  border: '1px solid var(--brass-dim)',
+                                  color: 'var(--brass)',
+                                  flexShrink: 0,
+                                }}
+                              >
+                                Add Image
+                              </button>
+                            </div>
+                            <p style={{
+                              fontSize: '0.65rem',
+                              fontFamily: 'var(--font-mono)',
+                              color: 'var(--stone-text-dim)',
+                              marginTop: '0.35rem',
+                              marginBottom: 0,
+                            }}>
+                              Direct add supports memory short_id and image URLs (no modal needed)
+                            </p>
+                          </div>
+
+                          {sourceLinkedImages.length > 0 && (
+                            <div style={{ marginTop: '0.75rem' }}>
+                              <div style={{
+                                ...labelStyle,
+                                marginBottom: '0.4rem',
+                                color: 'var(--brass)',
+                              }}>
+                                Source Memory Images (linked by default)
+                              </div>
+                              <div style={{
+                                display: 'flex',
+                                gap: '0.5rem',
+                                overflowX: 'auto',
+                                paddingBottom: '0.25rem',
+                              }}>
+                                {sourceLinkedImages.map(memory => (
+                                  <button
+                                    key={`src-${memory.short_id}`}
+                                    onClick={() => handleUseMemoryImage(post.slug, memory)}
+                                    disabled={isSaving}
+                                    style={{
+                                      border: '1px solid rgba(184,134,11,0.35)',
+                                      background: 'var(--stone-dark)',
+                                      borderRadius: '6px',
+                                      padding: '0.3rem',
+                                      cursor: 'pointer',
+                                      minWidth: '88px',
+                                      flex: '0 0 auto',
+                                    }}
+                                  >
+                                    <img
+                                      src={memory.image_url}
+                                      alt={memory.session_name || memory.short_id}
+                                      style={{
+                                        width: '80px',
+                                        height: '80px',
+                                        objectFit: 'cover',
+                                        borderRadius: '4px',
+                                        display: 'block',
+                                      }}
+                                    />
+                                    <div style={{
+                                      marginTop: '0.3rem',
+                                      fontSize: '0.58rem',
+                                      fontFamily: 'var(--font-mono)',
+                                      color: 'var(--brass)',
+                                      whiteSpace: 'nowrap',
+                                    }}>
+                                      {memory.short_id}
+                                    </div>
+                                  </button>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+
+                          {reusableAssetsForPost.length > 0 && (
+                            <div style={{ marginTop: '0.75rem' }}>
+                              <div style={{
+                                ...labelStyle,
+                                marginBottom: '0.4rem',
+                              }}>
+                                Recent Generated Assets (click to use)
+                              </div>
+                              <div style={{
+                                display: 'flex',
+                                gap: '0.5rem',
+                                overflowX: 'auto',
+                                paddingBottom: '0.25rem',
+                              }}>
+                                {reusableAssetsForPost.map((asset, idx) => (
+                                  <button
+                                    key={`${asset.id || asset.short_id || asset.image_url}-${idx}`}
+                                    onClick={() => {
+                                      if (asset.short_id) {
+                                        handleUseMemoryImage(post.slug, asset)
+                                      } else {
+                                        applyCoverImage(post.slug, asset.image_url, {
+                                          shortId: (asset.source_memories && asset.source_memories[0]) || null,
+                                          message: 'Cover image set from recent asset',
+                                        })
+                                      }
+                                    }}
+                                    disabled={isSaving}
+                                    style={{
+                                      border: '1px solid rgba(184,134,11,0.2)',
+                                      background: 'var(--stone-dark)',
+                                      borderRadius: '6px',
+                                      padding: '0.3rem',
+                                      cursor: 'pointer',
+                                      minWidth: '88px',
+                                      flex: '0 0 auto',
+                                    }}
+                                  >
+                                    <img
+                                      src={asset.image_url}
+                                      alt={asset.session_name || asset.label || asset.short_id || 'asset'}
+                                      style={{
+                                        width: '80px',
+                                        height: '80px',
+                                        objectFit: 'cover',
+                                        borderRadius: '4px',
+                                        display: 'block',
+                                      }}
+                                    />
+                                    <div style={{
+                                      marginTop: '0.3rem',
+                                      fontSize: '0.56rem',
+                                      fontFamily: 'var(--font-mono)',
+                                      color: 'var(--brass)',
+                                      whiteSpace: 'nowrap',
+                                      maxWidth: '84px',
+                                      overflow: 'hidden',
+                                      textOverflow: 'ellipsis',
+                                    }}>
+                                      {asset.short_id || asset.source || 'asset'}
+                                    </div>
+                                  </button>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+
                           {data.cover_image && (
                             <div style={{
                               marginTop: '0.5rem',
@@ -944,142 +1207,6 @@ Please start by asking me a few questions about the purpose, audience, and the s
           })}
         </div>
       </div>
-
-      {/* Memory Image Picker Modal */}
-      {memoryPickerSlug && (
-        <div
-          onClick={() => setMemoryPickerSlug(null)}
-          style={{
-            position: 'fixed',
-            inset: 0,
-            zIndex: 50,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            padding: '2rem',
-            background: 'rgba(42,39,36,0.95)',
-            backdropFilter: 'blur(8px)',
-          }}
-        >
-          <div
-            onClick={e => e.stopPropagation()}
-            className="brass-frame-strong"
-            style={{
-              width: '100%',
-              maxWidth: '64rem',
-              maxHeight: '80vh',
-              overflow: 'hidden',
-              display: 'flex',
-              flexDirection: 'column',
-            }}
-          >
-            <div style={{
-              padding: '1.25rem 1.5rem',
-              borderBottom: '1px solid var(--brass-dim)',
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-            }}>
-              <div>
-                <div style={{
-                  fontSize: '0.625rem',
-                  fontFamily: 'var(--font-mono)',
-                  color: 'var(--brass)',
-                  textTransform: 'uppercase',
-                  letterSpacing: '0.3em',
-                }}>
-                  Select Cover Image
-                </div>
-                <div style={{
-                  fontSize: '0.75rem',
-                  color: 'var(--stone-text-dim)',
-                  marginTop: '0.25rem',
-                }}>
-                  Choose a memory image to use as the blog post cover
-                </div>
-              </div>
-              <button
-                onClick={() => setMemoryPickerSlug(null)}
-                style={{
-                  padding: '0.5rem',
-                  color: 'var(--stone-text-dim)',
-                  background: 'none',
-                  border: 'none',
-                  cursor: 'pointer',
-                }}
-              >
-                <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
-            </div>
-
-            <div style={{
-              flex: 1,
-              overflowY: 'auto',
-              padding: '1.5rem',
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))',
-              gap: '1rem',
-              alignContent: 'start',
-            }}>
-              {memoriesWithImages.map(memory => (
-                <div
-                  key={memory.short_id}
-                  onClick={() => {
-                    updateField(memoryPickerSlug, 'cover_image', memory.image_url)
-                    setPosts(prev => prev.map(p =>
-                      p.slug === memoryPickerSlug ? { ...p, cover_image: memory.image_url } : p
-                    ))
-                    showFeedback(memoryPickerSlug, 'Cover image set from memory')
-                    setMemoryPickerSlug(null)
-                  }}
-                  style={{
-                    cursor: 'pointer',
-                    borderRadius: '8px',
-                    overflow: 'hidden',
-                    border: '1px solid rgba(184,134,11,0.15)',
-                    transition: 'all 0.2s',
-                    background: 'var(--stone-dark)',
-                  }}
-                >
-                  <div style={{ aspectRatio: '1', position: 'relative', overflow: 'hidden' }}>
-                    <img
-                      src={memory.image_url}
-                      alt={memory.session_name || memory.short_id}
-                      style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                    />
-                  </div>
-                  <div style={{ padding: '0.5rem 0.75rem' }}>
-                    <div style={{
-                      fontSize: '0.6rem',
-                      fontFamily: 'var(--font-mono)',
-                      color: 'var(--brass)',
-                      textTransform: 'uppercase',
-                      letterSpacing: '0.1em',
-                      marginBottom: '0.2rem',
-                    }}>
-                      {memory.short_id} &middot; {memory.agent}
-                    </div>
-                    <div style={{
-                      fontSize: '0.75rem',
-                      color: 'var(--stone-text)',
-                      fontFamily: 'var(--font-display)',
-                      lineHeight: 1.3,
-                      display: '-webkit-box',
-                      WebkitLineClamp: 2,
-                      WebkitBoxOrient: 'vertical',
-                      overflow: 'hidden',
-                    }}>
-                      {memory.session_name || 'Untitled'}
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   )
 }
