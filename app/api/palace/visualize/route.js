@@ -22,14 +22,18 @@ export async function POST(request) {
     }
 
     const palaceId = auth.palace_id
-    const { scope, target_id } = body
+    const { scope, target_id, style_mode, include_human, subject_name } = body
 
     if (!['blog', 'room', 'full'].includes(scope)) {
       return NextResponse.json({ error: 'Invalid scope. Must be blog, room, or full.' }, { status: 400 })
     }
 
     // 1. Build Deep Context Prompt
-    const prompt = await buildDeepContextPrompt(supabase, palaceId, scope, target_id)
+    const prompt = await buildDeepContextPrompt(supabase, palaceId, scope, target_id, {
+      style_mode,
+      include_human,
+      subject_name,
+    })
 
     // 2. Call Gemini
     const imageBuffer = await generateImageFromPrompt(prompt)
