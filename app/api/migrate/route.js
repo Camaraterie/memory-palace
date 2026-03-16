@@ -238,6 +238,7 @@ export async function POST(req) {
 
     // New columns on memories
     await client.query(`ALTER TABLE memories ADD COLUMN IF NOT EXISTS room_slug text;`)
+    await client.query(`ALTER TABLE memories ADD COLUMN IF NOT EXISTS latent_intent text;`)
     await client.query(`ALTER TABLE memories ADD COLUMN IF NOT EXISTS embedding vector(768);`)
 
     // HNSW index (works with zero rows, better recall than IVFFlat)
@@ -254,6 +255,130 @@ export async function POST(req) {
         AND ciphertext IS NOT NULL
         AND ciphertext LIKE '{%'
         AND (ciphertext::jsonb -> 'metadata' ->> 'room') IS NOT NULL;
+    `)
+
+    // Backfill latent_intent from plaintext payload root or metadata
+    await client.query(`
+      UPDATE memories
+      SET latent_intent = COALESCE(
+        (ciphertext::jsonb ->> 'latent_intent'),
+        (ciphertext::jsonb -> 'metadata' ->> 'latent_intent')
+      )
+      WHERE latent_intent IS NULL
+        AND ciphertext IS NOT NULL
+        AND ciphertext LIKE '{%'
+        AND (
+          (ciphertext::jsonb ->> 'latent_intent') IS NOT NULL
+          OR (ciphertext::jsonb -> 'metadata' ->> 'latent_intent') IS NOT NULL
+        );
+    `)
+
+    // --- Ecosystem + Federation tables ---
+
+    // Palace metadata for registry
+    await client.query(`ALTER TABLE palaces ADD COLUMN IF NOT EXISTS slug text UNIQUE;`)
+    await client.query(`ALTER TABLE palaces ADD COLUMN IF NOT EXISTS description text;`)
+
+    // Ecosystems: groups of palaces that can discover each other
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS ecosystems (
+        id uuid DEFAULT gen_random_uuid() PRIMARY KEY,
+        slug text UNIQUE NOT NULL,
+        name text NOT NULL,
+        description text,
+        owner_id uuid REFERENCES auth.users(id),
+        created_at timestamptz DEFAULT now()
+      );
+    `)
+    await client.query(`ALTER TABLE ecosystems ENABLE ROW LEVEL SECURITY;`)
+
+    await client.query(`
+      DO $$
+      BEGIN
+        IF NOT EXISTS (
+            SELECT 1 FROM pg_policies WHERE tablename = 'ecosystems' AND policyname = 'Users can manage their own ecosystems'
+        ) THEN
+            CREATE POLICY "Users can manage their own ecosystems"
+            ON ecosystems FOR ALL
+            TO authenticated
+            USING (auth.uid() = owner_id)
+            WITH CHECK (auth.uid() = owner_id);
+        END IF;
+      END
+      $$;
+    `)
+
+    // Junction: which palaces belong to which ecosystem
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS ecosystem_members (
+        id uuid DEFAULT gen_random_uuid() PRIMARY KEY,
+        ecosystem_id uuid NOT NULL REFERENCES ecosystems(id) ON DELETE CASCADE,
+        palace_id text NOT NULL REFERENCES palaces(id) ON DELETE CASCADE,
+        joined_at timestamptz DEFAULT now(),
+        UNIQUE(ecosystem_id, palace_id)
+      );
+    `)
+    await client.query(`ALTER TABLE ecosystem_members ENABLE ROW LEVEL SECURITY;`)
+
+    await client.query(`
+      DO $$
+      BEGIN
+        IF NOT EXISTS (
+            SELECT 1 FROM pg_policies WHERE tablename = 'ecosystem_members' AND policyname = 'Users can manage members in their own ecosystems'
+        ) THEN
+            CREATE POLICY "Users can manage members in their own ecosystems"
+            ON ecosystem_members FOR ALL
+            TO authenticated
+            USING (
+              EXISTS (
+                SELECT 1 FROM ecosystems WHERE ecosystems.id = ecosystem_members.ecosystem_id AND ecosystems.owner_id = auth.uid()
+              )
+            )
+            WITH CHECK (
+              EXISTS (
+                SELECT 1 FROM ecosystems WHERE ecosystems.id = ecosystem_members.ecosystem_id AND ecosystems.owner_id = auth.uid()
+              )
+            );
+        END IF;
+      END
+      $$;
+    `)
+
+    // Federation keys: read-only keys spanning all palaces in an ecosystem
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS federation_keys (
+        id uuid DEFAULT gen_random_uuid() PRIMARY KEY,
+        ecosystem_id uuid NOT NULL REFERENCES ecosystems(id) ON DELETE CASCADE,
+        key_hash text NOT NULL,
+        agent_name text NOT NULL,
+        active boolean DEFAULT true,
+        created_at timestamptz DEFAULT now()
+      );
+    `)
+    await client.query(`ALTER TABLE federation_keys ENABLE ROW LEVEL SECURITY;`)
+
+    await client.query(`
+      DO $$
+      BEGIN
+        IF NOT EXISTS (
+            SELECT 1 FROM pg_policies WHERE tablename = 'federation_keys' AND policyname = 'Users can manage federation keys in their own ecosystems'
+        ) THEN
+            CREATE POLICY "Users can manage federation keys in their own ecosystems"
+            ON federation_keys FOR ALL
+            TO authenticated
+            USING (
+              EXISTS (
+                SELECT 1 FROM ecosystems WHERE ecosystems.id = federation_keys.ecosystem_id AND ecosystems.owner_id = auth.uid()
+              )
+            )
+            WITH CHECK (
+              EXISTS (
+                SELECT 1 FROM ecosystems WHERE ecosystems.id = federation_keys.ecosystem_id AND ecosystems.owner_id = auth.uid()
+              )
+            );
+        END IF;
+      END
+      $$;
     `)
 
     await client.query("NOTIFY pgrst, 'reload schema';")

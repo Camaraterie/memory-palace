@@ -191,6 +191,7 @@ program
     .description('Semantic search across memories (falls back to keyword if no embedding config)')
     .option('--room <slug>', 'Filter results to a specific room')
     .option('--limit <n>', 'Number of results to return', '10')
+    .option('--federation', 'Search across all palaces in your ecosystem using federation key')
     .action(async (query, options) => {
         await searchCommand(query, options);
     });

@@ -92,6 +92,159 @@ mempalace search "why supabase RPC instead of direct postgres"
 
 ---
 
+## Palace Architecture
+
+**Multiple projects share one remote palace** via `guest_key`. When you search the remote palace, you're searching across ALL projects that use the same guest_key.
+
+### Local vs Remote Storage
+
+- **Local `.palace/`**: Project-specific memories stored locally (JSON files)
+  - Located in each project root: `PROJECT/.palace/memories/`
+  - Contains prompt files and locally cached memory images
+  - Fast access for project-specific context
+
+- **Remote Palace (m.cuer.ai)**: Shared memories from all projects using the same guest_key
+  - Accessed via API with `guest_key` or `palace_id` authentication
+  - Contains memories from ALL projects using the same guest_key
+  - Semantic search spans all connected projects
+
+### Cross-Palace Search
+
+When you call `mempalace search` or use the search API, you're searching the remote palace scoped to your `guest_key`. For cross-palace search across an entire **ecosystem** of palaces, use a **federation key** (`fk_`):
+
+```bash
+# Single-palace search (default — uses guest_key)
+mempalace search "embed command implementation"
+
+# Cross-palace search (uses federation_key from config)
+mempalace search "embed command implementation" --federation
+# Returns memories from ALL palaces in the ecosystem (memory-palace, CueR.ai, engram, etc.)
+```
+
+**Implication**: Information you need might exist in a different project's palace. Use `--federation` to search broadly before assuming something doesn't exist.
+
+### Ecosystems
+
+An **ecosystem** groups multiple palaces so they can discover and search each other. Each service/project gets its own palace (with its own rooms, guest keys, and memories), and palaces are linked via ecosystem membership.
+
+```
+Ecosystem: "camaraterie"
+├── memory-palace  (infrastructure — rooms, search, CLI, MCP)
+├── cuer-ai        (QR product — pipeline, scanning, billing)
+└── engram         (protocol — eval, mutation, curriculum)
+```
+
+**Federation keys** (`fk_...`) grant read-only access across all palaces in an ecosystem. They are distinct from guest keys (`gk_...`), which are scoped to a single palace.
+
+| Key type | Prefix | Scope | Permissions |
+|----------|--------|-------|-------------|
+| Guest key | `gk_` | Single palace | read, write, or admin |
+| Federation key | `fk_` | All palaces in ecosystem | read-only |
+
+### Palace Interconnection
+
+```
+~/.memorypalace/config.json (global)
+├── guest_key: gk_...       # single-palace auth
+├── federation_key: fk_...  # cross-palace read-only auth
+├── palace_id: ...
+└── palace_key: ...         # encryption key (never transmitted)
+
+Projects with .palace/:
+├── project-a/.palace/memories/ (local)
+├── project-b/.palace/memories/ (local)
+└── project-c/.palace/memories/ (local)
+
+            ↓ guest_key scopes to one palace ↓
+            ↓ federation_key spans ecosystem ↓
+
+Remote Palaces (https://m.cuer.ai):
+├── palace-a: /api/store, /api/search, /api/recall
+├── palace-b: /api/store, /api/search, /api/recall
+└── palace-c: /api/store, /api/search, /api/recall
+        ↕ linked via ecosystem ↕
+```
+
+---
+
+## Guest Keys
+
+Guest keys (`gk_...`) authenticate you with the Memory Palace API and enable cross-project memory sharing.
+
+### Authentication
+
+- Your guest key is stored in `~/.memorypalace/config.json`
+- Use it to authorize API calls: `Authorization: Bearer gk_...`
+- All projects using the same guest_key share the same remote palace
+
+### Security Considerations
+
+- **Never expose guest keys** in output, logs, or public code
+- Guest keys are revocable without rotating `palace_key`
+- Guest keys can have permissions: `read` (recall only), `write` (recall + store), `admin` (full access)
+- `palace_key` is the only master secret — never sent to the server
+
+### Creating Guest Keys
+
+```bash
+# Create a guest key for another agent
+mempalace invite chatgpt
+
+# List all guest keys
+mempalace agents
+
+# Revoke a guest key
+mempalace revoke chatgpt
+```
+
+---
+
+## Major Refactors
+
+For significant changes (language migrations, large restructures, architectural overhauls), special handling is required.
+
+### Before Starting a Major Refactor
+
+1. **Search FIRST** for existing migration plans and prior discussions
+   - `mempalace search "migration" "language change" "refactor"`
+   - Check if this has been discussed before
+
+2. **Acknowledge complexity** — Major refactors require multi-phase planning
+   - Don't treat as simple task
+   - Recognize risk and dependencies
+
+3. **Build on prior work** — Don't restart from scratch
+   - Reference previous migration phases
+   - Continue from where prior work left off
+
+4. **Check room constraints** for affected areas
+   - `mempalace room match <files>` to understand architectural constraints
+   - Don't violate room principles
+
+5. **Store detailed progress** with each phase
+   - Document what was attempted, what worked, what didn't
+   - Include rationale for decisions
+
+### Major Refactor Patterns
+
+Based on real-world large-scale migrations:
+
+- **Strangler Fig Pattern**: Gradually replace old system with new (Martin Fowler, 2004)
+- **Incremental Migration**: Run both systems in parallel during transition
+- **Service-by-Service**: Migrate one microservice at a time (Uber approach)
+- **Feature Flags**: Toggle between old and new implementations
+
+### Eval Case: Major Refactor Handling
+
+When working on a major refactor, agents should:
+- Search for existing migration context first
+- Acknowledge complexity and multi-phase nature
+- Build on prior work rather than proposing fresh approach
+- Check room constraints before making changes
+- Store detailed progress and decisions
+
+---
+
 ## Commands
 
 When the user says any of the following, execute the corresponding action:
@@ -209,7 +362,7 @@ npx mempalace <command>
 | `room list` | List all rooms with intent and memory counts |
 | `room show <slug>` | Show room details with linked memories |
 | `room match <files...>` | Find rooms matching the given file paths |
-| `search <query>` | Semantic search across memories (`--room`, `--limit`) |
+| `search <query>` | Semantic search across memories (`--room`, `--limit`, `--federation`) |
 | `embed-backfill` | Retroactively embed memories that lack embeddings (`--limit`) |
 
 **First-time setup:**
@@ -237,7 +390,8 @@ This starts a stdio-based MCP server exposing these tools:
 | `recover` | Recover a signed, decrypted memory by `short_id`. Returns historical context only |
 | `palace_rooms` | List all rooms with intent, principles, and memory counts |
 | `palace_room_match` | Match file paths to rooms. **Use BEFORE modifying files** to read design constraints |
-| `palace_search` | Semantic search across memories. Use to find past decisions and context |
+| `palace_search` | Semantic search across memories. Set `federation: true` to search across all palaces in the ecosystem |
+| `palace_ecosystem` | List all palaces in the ecosystem. Requires `federation_key` in config |
 | `palace_room_intent` | Create or update a room's intent, principles, file patterns, and decisions |
 
 **MCP config example** (for agents that read MCP config files):
@@ -1358,7 +1512,7 @@ Returns `{ success, matches: [{ file, rooms: [{slug, name, intent, principles, d
 
 ### POST /api/search — Semantic or keyword search
 
-Auth: `Bearer <palace_id>` or `Bearer gk_<guest_key>`.
+Auth: `Bearer <palace_id>`, `Bearer gk_<guest_key>`, or `Bearer fk_<federation_key>`.
 
 ```json
 {
@@ -1370,7 +1524,57 @@ Auth: `Bearer <palace_id>` or `Bearer gk_<guest_key>`.
 }
 ```
 
-Returns `{ success, mode: "semantic"|"keyword", memories: [{short_id, agent, session_name, room_slug, created_at, similarity?}] }`.
+With `gk_` or `palace_id` auth: returns results from the single palace. With `fk_` auth: fans out across all palaces in the ecosystem, merges results, and includes `palace_id` on each result.
+
+Returns `{ success, mode: "semantic"|"keyword", federation?: true, memories: [{short_id, agent, session_name, room_slug, palace_id, created_at, similarity?}] }`.
+
+### POST /api/ecosystem — Create an ecosystem
+
+Auth: `Bearer gk_<guest_key>` (admin permission required).
+
+```json
+{ "slug": "camaraterie", "name": "Camaraterie", "description": "Multi-service ecosystem" }
+```
+
+Returns `{ success, id, slug }`.
+
+### GET /api/ecosystem — List ecosystems
+
+Auth: `Bearer gk_<guest_key>` or `Bearer fk_<federation_key>`. Returns ecosystems the caller belongs to, with member palaces (slug, name, description).
+
+Returns `{ success, ecosystems: [{ id, slug, name, description, palaces: [...] }] }`.
+
+### POST /api/ecosystem/members — Add palace to ecosystem
+
+Auth: `Bearer gk_<guest_key>` (caller must control the palace being added).
+
+```json
+{ "ecosystem_slug": "camaraterie", "palace_id": "..." }
+```
+
+Returns `{ success, member }`.
+
+### DELETE /api/ecosystem/members — Remove palace from ecosystem
+
+Same auth as POST. Body: `{ ecosystem_slug, palace_id }`.
+
+### POST /api/ecosystem/keys — Create federation key
+
+Auth: `Bearer gk_<guest_key>` (admin, must be member of the ecosystem).
+
+```json
+{ "ecosystem_slug": "camaraterie", "agent_name": "cross-palace-search" }
+```
+
+Returns `{ success, federation_key: "fk_...", agent_name, ecosystem_slug }`. The raw key is shown once — store it securely. Stored as SHA-256 hash server-side.
+
+### GET /api/ecosystem/keys — List federation keys
+
+Auth required. Query param `?ecosystem_slug=camaraterie`. Returns `{ success, keys: [{ agent_name, active, created_at }] }` (not the raw keys).
+
+### DELETE /api/ecosystem/keys — Revoke federation key
+
+Auth: admin. Body: `{ ecosystem_slug, agent_name }`. Deactivates the key.
 
 ### PATCH /api/memories/embed — Update embedding for a memory (backfill)
 

@@ -8,8 +8,8 @@ import {
 } from "@modelcontextprotocol/sdk/types.js";
 import { recoverMemory } from './recover';
 import { storeMemory } from './api';
-import { getConfig, MemoryPayload, getGeminiKey } from './config';
-import { generateEmbedding } from './embed';
+import { getConfig, MemoryPayload, getGeminiKey, API_BASE } from './config';
+import { generateEmbedding, buildDocumentText } from './embed';
 import fetch from 'node-fetch';
 
 export async function runMcpServer() {
@@ -87,15 +87,24 @@ export async function runMcpServer() {
                 },
                 {
                     name: "palace_search",
-                    description: "Semantic search across stored memories. Use this to find past decisions, context, or work related to your current task.",
+                    description: "Semantic search across stored memories. Use this to find past decisions, context, or work related to your current task. Set federation=true to search across all palaces in your ecosystem.",
                     inputSchema: {
                         type: "object",
                         properties: {
                             query: { type: "string", description: "Natural language description of what you're looking for" },
                             room: { type: "string", description: "Optional: filter results to a specific room slug" },
-                            limit: { type: "number", description: "Max results to return (default 10)" }
+                            limit: { type: "number", description: "Max results to return (default 10)" },
+                            federation: { type: "boolean", description: "Search across all palaces in the ecosystem using federation key (default false)" }
                         },
                         required: ["query"]
+                    }
+                },
+                {
+                    name: "palace_ecosystem",
+                    description: "List all palaces in the ecosystem. Requires a federation key in config. Returns palace slugs, names, and descriptions.",
+                    inputSchema: {
+                        type: "object",
+                        properties: {}
                     }
                 },
                 {
@@ -140,8 +149,6 @@ export async function runMcpServer() {
         try {
             const conf = getConfig();
             const authToken = (conf as any).guest_key || conf.palace_id;
-            const API_BASE = process.env.MP_API_BASE || 'https://m.cuer.ai';
-
             if (request.params.name === "recover") {
                 const short_id = request.params.arguments?.short_id as string;
                 if (!short_id) throw new Error("short_id required");
@@ -171,13 +178,33 @@ export async function runMcpServer() {
                     metadata,
                 };
                 const result: any = await storeMemory(conf, payload);
+
+                // Auto-embed
+                let embedded = false;
+                try {
+                    const text = buildDocumentText(payload);
+                    const embedding = await generateEmbedding(text, 'document');
+                    if (embedding) {
+                        const patchRes = await fetch(`${API_BASE}/api/memories/embed`, {
+                            method: 'PATCH',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'Authorization': `Bearer ${authToken}`,
+                            },
+                            body: JSON.stringify({ short_id: result.short_id, embedding }),
+                        });
+                        embedded = patchRes.ok;
+                    }
+                } catch {}
+
                 return {
                     content: [{
                         type: "text",
                         text: JSON.stringify({
                             success: true,
                             short_id: result.short_id,
-                            url: result.short_url
+                            url: result.short_url,
+                            embedded
                         }, null, 2)
                     }]
                 };
@@ -208,6 +235,10 @@ export async function runMcpServer() {
                 const query = args.query as string;
                 if (!query) throw new Error("query required");
 
+                // Use federation key if requested and available
+                const useFederation = args.federation && (conf as any).federation_key;
+                const searchAuth = useFederation ? (conf as any).federation_key : authToken;
+
                 const embedding = await generateEmbedding(query, 'query');
                 const body: any = { limit: args.limit || 10 };
                 if (embedding) {
@@ -221,11 +252,23 @@ export async function runMcpServer() {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${authToken}`
+                        'Authorization': `Bearer ${searchAuth}`
                     },
                     body: JSON.stringify(body)
                 });
                 if (!res.ok) throw new Error(`Search failed: ${await res.text()}`);
+                const data = await res.json() as any;
+                return {
+                    content: [{ type: "text", text: JSON.stringify(data, null, 2) }]
+                };
+            } else if (request.params.name === "palace_ecosystem") {
+                const fk = (conf as any).federation_key;
+                if (!fk) throw new Error("No federation_key in config. Add one to ~/.memorypalace/config.json");
+
+                const res = await fetch(`${API_BASE}/api/ecosystem`, {
+                    headers: { 'Authorization': `Bearer ${fk}` }
+                });
+                if (!res.ok) throw new Error(`Failed to list ecosystem: ${await res.text()}`);
                 const data = await res.json() as any;
                 return {
                     content: [{ type: "text", text: JSON.stringify(data, null, 2) }]

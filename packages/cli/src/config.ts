@@ -8,6 +8,9 @@ export interface Config {
     public_key: string;
     gemini_key?: string;
     guest_key?: string;
+    federation_key?: string;
+    expected_palace_id?: string;
+    fail_on_palace_mismatch?: boolean;
 }
 
 const CONFIG_DIR = path.join(os.homedir(), '.memorypalace');
@@ -25,6 +28,7 @@ export interface MemoryPayload {
     files: string[];
     blockers: string[];
     conversation_context: string;
+    latent_intent?: string;
     repo?: string;
     branch?: string;
     roster: any[];
