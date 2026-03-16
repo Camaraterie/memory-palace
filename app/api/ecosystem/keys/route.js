@@ -47,7 +47,7 @@ export async function POST(request) {
         }
 
         const auth = await resolveAuth(request)
-        if (!auth || !['admin'].includes(auth.permissions)) {
+        if (!auth || !['write', 'admin'].includes(auth.permissions)) {
             return NextResponse.json({ error: 'Unauthorized — admin permission required' }, { status: 401 })
         }
 
@@ -132,7 +132,7 @@ export async function DELETE(request) {
         }
 
         const auth = await resolveAuth(request)
-        if (!auth || !['admin'].includes(auth.permissions)) {
+        if (!auth || !['write', 'admin'].includes(auth.permissions)) {
             return NextResponse.json({ error: 'Unauthorized — admin permission required' }, { status: 401 })
         }
 

@@ -14,8 +14,8 @@ export async function POST(request) {
         }
 
         const auth = await resolveAuth(request)
-        if (!auth || !['admin'].includes(auth.permissions)) {
-            return NextResponse.json({ error: 'Unauthorized — admin permission required' }, { status: 401 })
+        if (!auth || !['write', 'admin'].includes(auth.permissions)) {
+            return NextResponse.json({ error: 'Unauthorized — write or admin permission required' }, { status: 401 })
         }
 
         // Determine owner_id: session user or look up palace owner
