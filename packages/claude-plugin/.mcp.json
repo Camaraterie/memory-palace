@@ -1,0 +1,12 @@
+{
+  "mcpServers": {
+    "memory-palace": {
+      "command": "node",
+      "args": ["${CLAUDE_PLUGIN_ROOT}/servers/palace-api.mjs"],
+      "env": {
+        "PALACE_GUEST_KEY": "${PALACE_GUEST_KEY}",
+        "PALACE_API_URL": "https://m.cuer.ai"
+      }
+    }
+  }
+}

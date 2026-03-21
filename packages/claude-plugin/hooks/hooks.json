@@ -1,0 +1,16 @@
+{
+  "hooks": {
+    "SessionStart": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "echo '## Memory Palace Active\n\nMemory Palace tools available via MCP. Search before planning, check rooms before editing, store on session end.\n\nCommands: /palace-setup, /palace-search, /palace-store, /palace-rooms, /palace-recall'",
+            "timeout": 5
+          }
+        ]
+      }
+    ]
+  }
+}

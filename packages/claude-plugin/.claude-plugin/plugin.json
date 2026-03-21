@@ -1,0 +1,11 @@
+{
+  "name": "memory-palace",
+  "version": "0.1.0",
+  "description": "Persistent cross-session memory for AI agents via Memory Palace (m.cuer.ai). Clone repos, search/store memories, manage rooms, and follow the memory protocol.",
+  "author": {
+    "name": "Chris Camarata"
+  },
+  "repository": "https://github.com/Camaraterie/memory-palace",
+  "keywords": ["memory", "palace", "engram", "protocol", "agent-memory", "rooms"],
+  "hooks": "./hooks/hooks.json"
+}
