@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import crypto from 'crypto'
 import { v4 as uuidv4 } from 'uuid'
 import { createSupabaseAdmin } from '../../../lib/supabase'
 import { resolveAuth } from '../../../lib/auth'
@@ -155,12 +156,28 @@ export async function POST(request) {
 
         if (error) throw error
 
+        // Bootstrap an admin guest key for the creator — without this, the palace
+        // is unreachable (no owner_id, no gk_ token). Whoever calls this unauthenticated
+        // endpoint is the owner by definition.
+        const adminKey = 'gk_' + crypto.randomBytes(16).toString('hex')
+        const { error: agentError } = await supabase
+            .from('agents')
+            .insert([{
+                palace_id: data.id,
+                agent_name: 'owner',
+                guest_key: adminKey,
+                permissions: 'admin',
+                active: true,
+            }])
+
+        if (agentError) throw agentError
+
         return NextResponse.json({
             success: true,
             message: 'New Memory Palace created successfully.',
             palace_id: data.id,
-            api_key: data.id,
-            note: 'Save this API key. You will need it to store memories in this palace.'
+            admin_key: adminKey,
+            note: 'Save admin_key — it is your only credential. Store it with: mempalace auth <admin_key>',
         })
     } catch (error) {
         console.error('Error creating Palace:', error)
