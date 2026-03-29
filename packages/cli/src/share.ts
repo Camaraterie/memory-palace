@@ -1,8 +1,8 @@
-import { getConfig, API_BASE } from './config';
+import { resolvePalaceConfig, API_BASE } from './config';
 import { getMemoryRaw } from './api';
 
 export async function shareMemory(shortId: string) {
-    const conf = getConfig();
+    const conf = resolvePalaceConfig();
     const authToken = conf.guest_key || conf.palace_id;
 
     let raw: any;

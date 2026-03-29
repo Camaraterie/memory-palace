@@ -1,19 +1,20 @@
 import fetch from 'node-fetch';
-import { API_BASE, Config } from './config';
+import { API_BASE, ResolvedConfig } from './config';
 import { encryptPayload, signPayload, verifySignature, decryptPayload } from './crypto';
 import { generateEmbedding, buildDocumentText } from './embed';
 import fs from 'fs';
 import FormData from 'form-data';
 
-export async function createPalace(publicKey: string): Promise<string> {
-    const res = await fetch(`${API_BASE}/api/palace`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+export async function createPalace(publicKey: string): Promise<{ palace_id: string; admin_key: string }> {
+    const res = await fetch(API_BASE + "/api/palace", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ public_key: publicKey })
     });
-    if (!res.ok) throw new Error(`Failed to create palace: ${await res.text()}`);
+    if (!res.ok) throw new Error("Failed to create palace: " + await res.text());
     const data = await res.json() as any;
-    return data.palace_id;
+    if (!data.admin_key) throw new Error("Palace created but no admin_key returned — server may need updating.");
+    return { palace_id: data.palace_id, admin_key: data.admin_key };
 }
 
 export async function getMemories(authToken: string, limit: number = 10): Promise<any> {
@@ -24,7 +25,7 @@ export async function getMemories(authToken: string, limit: number = 10): Promis
     return await res.json();
 }
 
-export async function storeMemory(config: Config, payload: any, imageUrl?: string) {
+export async function storeMemory(config: ResolvedConfig, payload: any, imageUrl?: string) {
     const embedding = await generateEmbedding(buildDocumentText(payload), 'document');
 
     const body: any = {
@@ -57,7 +58,8 @@ export async function storeMemory(config: Config, payload: any, imageUrl?: strin
     }
 }
 
-export async function secureStoreMemory(config: Config, payload: any, imageUrl?: string) {
+export async function secureStoreMemory(config: ResolvedConfig, payload: any, imageUrl?: string) {
+    if (!config.palace_key) throw new Error('palace_key required for secure store. Run mempalace init to generate keys.');
     const { ciphertext, iv, authTag } = encryptPayload(config.palace_key, config.palace_id, payload);
     const signature = signPayload(config.palace_key, payload);
 

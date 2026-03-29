@@ -1,4 +1,4 @@
-import { getConfig } from './config';
+import { resolvePalaceConfig } from './config';
 import { getMemoryRaw } from './api';
 import { decryptPayload, verifySignature } from './crypto';
 
@@ -38,7 +38,7 @@ export function createTrustEnvelope(payload: any, shortId: string, isValid: bool
 }
 
 export async function recoverMemory(shortId: string, returnEnvelope: boolean = false) {
-    const conf = getConfig();
+    const conf = resolvePalaceConfig();
     const authToken = conf.guest_key || conf.palace_id;
 
     try {

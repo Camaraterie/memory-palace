@@ -1,8 +1,8 @@
 import fetch from 'node-fetch';
-import { API_BASE, getConfig } from './config';
+import { API_BASE, resolvePalaceConfig } from './config';
 
 function getAuthToken() {
-    const config = getConfig();
+    const config = resolvePalaceConfig();
     return config.guest_key || config.palace_id;
 }
 

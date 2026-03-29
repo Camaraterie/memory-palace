@@ -24,8 +24,9 @@ program
 
 program
     .command('init')
-    .description('Initialize Memory Palace')
+    .description('Initialize Memory Palace in the current directory')
     .option('--gemini-key <key>', 'Set Gemini API Key')
+    .option('--name <name>', 'Display name for this palace (default: directory name)')
     .action(async (options) => {
         await initCommand(options);
     });
@@ -191,6 +192,7 @@ program
     .description('Semantic search across memories (falls back to keyword if no embedding config)')
     .option('--room <slug>', 'Filter results to a specific room')
     .option('--limit <n>', 'Number of results to return', '10')
+    .option('--all', 'Search across ALL configured palaces, not just the current one')
     .option('--federation', 'Search across all palaces in your ecosystem using federation key')
     .action(async (query, options) => {
         await searchCommand(query, options);
@@ -202,6 +204,31 @@ program
     .option('--limit <n>', 'Number of memories to process', '50')
     .action(async (options) => {
         await embedBackfillCommand(parseInt(options.limit, 10));
+    });
+
+program
+    .command('palaces')
+    .description('List all configured Memory Palaces')
+    .option('--verbose', 'Show guest key prefix and creation date')
+    .action(async (options) => {
+        const { palacesListCommand } = require('./palaces');
+        await palacesListCommand(options);
+    });
+
+program
+    .command('switch [palace_id]')
+    .description('Switch this project to use a different Memory Palace')
+    .action(async (palace_id) => {
+        const { switchCommand } = require('./switch-palace');
+        await switchCommand(palace_id);
+    });
+
+program
+    .command('merge <source_palace_id>')
+    .description('Merge: point this project at an existing palace (shares memories)')
+    .action(async (source_palace_id) => {
+        const { mergeCommand } = require('./merge');
+        await mergeCommand(source_palace_id);
     });
 
 program

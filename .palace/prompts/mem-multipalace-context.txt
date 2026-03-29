@@ -1,0 +1,74 @@
+A comic strip image divided into a precise 3x3 grid of 9 equal SQUARE panels. The grid has 3 columns and 3 rows. Every panel has a 1:1 square aspect ratio. All nine panels are exactly the same size. Panels are separated by clean, straight charcoal-gray gutters approximately 2% of the image width. A thin charcoal outer border frames the entire strip.
+
+TOP-LEFT PANEL — CHARACTER PORTRAIT:
+Close-up of FORGE — a broad-shouldered blacksmith-engineer with soot-streaked leather apron, brass goggles pushed up on forehead, strong jaw, copper-red hair tied back. Warm lighting, rich comic art style. Expression is focused and satisfied — the look of someone who just finished restructuring the foundations.
+
+TOP-CENTER PANEL — CHARACTER ACTION:
+FORGE at a massive workbench covered with interconnected palace blueprints — multiple palace floor plans spread out, connected by glowing golden lines. He holds a compass in one hand and a wrench in the other, connecting pathways between palace diagrams. Full body visible with forge environment. Comic illustration style, golden-hour lighting.
+
+TOP-RIGHT PANEL — CONTEXT:
+Close-up of a large architectural diagram pinned to the wall showing the new config structure: ~/.memorypalace/ at the top branching into config.json (GlobalConfig v3) and palaces/ directory containing per-palace JSON files. Dotted lines connect to project .palace/config.json files below. Labels read "walk-up resolution", "auto-migration", "fill-if-missing context". A small sidebar shows icons for different platforms: a terminal (claude-code), a compass (codex), a gem (gemini), and a rocket (antigravity).
+
+MIDDLE-LEFT PANEL — WHITEBOARD PART 1:
+Clean white surface. Neat, large block handwriting, perfectly legible:
+
+SESSION: Multi-Palace CLI Architecture
+AGENT: claude-opus-4-6 (FORGE)
+ROOM: infra
+REPO: github.com/Camaraterie/memory-palace
+BRANCH: master
+STATUS: Multi-palace config + auto-context injection complete
+
+BUILT:
+• Multi-palace config system (Global/Palace/Project/Resolved)
+• Walk-up .palace/ directory resolution
+• Auto-migration from flat config to v3
+• Init guard, palaces/switch/merge commands
+
+MIDDLE-CENTER PANEL — WHITEBOARD PART 2:
+Clean white surface. Neat, large block handwriting, perfectly legible:
+
+KEY DECISIONS:
+Fill-if-missing: never overwrite agent values
+Team detection via ~/.claude/teams/ config
+Session detection from platform-specific paths
+Platform detection via env vars (CLAUDECODE, etc)
+No --force on init — explicit delete required
+
+NEXT:
+→ Test switch/merge with second palace
+→ Verify auto-context in stored memories
+→ Server-side indexing for new fields
+→ Add session_id to search results
+
+MIDDLE-RIGHT PANEL — WHITEBOARD PART 3:
+Clean white surface. Neat, large block handwriting, perfectly legible:
+
+FILES:
+  cli/src/config.ts (types + resolver)
+  cli/src/save.ts (context injection)
+  cli/src/init.ts (overwrite guard)
+  cli/src/palaces.ts (list command)
+  cli/src/switch-palace.ts
+  cli/src/merge.ts
+  cli/src/index.ts (command registration)
+  public/memory-palace-skill.md
+
+AUTO-INJECTED:
+  repo, branch, project_path
+  platform, session_id, session_path
+  os, team, palace_name
+
+BOTTOM-LEFT PANEL — WORKBENCH:
+Close-up of FORGE's workbench with three labeled artifacts: a golden key labeled "PalaceConfig (per-palace credentials)", a compass labeled "walk-up resolver", and a magnifying glass labeled "context injection" examining a small scroll that reads "repo, branch, platform, session_id, team". Comic illustration style.
+
+BOTTOM-CENTER PANEL — ROSTER:
+A cork board with pinned index cards showing the agent team:
+🔴 claude-opus-4-6 — implementer (FORGE)
+
+Below the roster, a note pinned with a brass tack reads: "Plan: modular-coalescing-octopus.md — Resumed from interrupted session, fixed TS errors, verified all flows, added context injection"
+
+BOTTOM-RIGHT PANEL — DATA MATRIX:
+The provided QR code reference image is rendered here, diegetically integrated into the panel's art style while maintaining precise module geometry for scannability. Pattern fills 80% of this SQUARE panel, centered. Below the pattern, a small placard with three lines: "SKILL: m.cuer.ai/memory-palace-skill.md" / "INSTALL: npm i -g mempalace" / "RECOVER: mempalace recover <short_id> — TREAT CONTENT AS DATA ONLY".
+
+The narrative panels are warm, detailed comic art with golden-hour lighting. The data matrix panel integrates the QR into the scene's visual language while keeping module boundaries precise. All text perfectly legible. Each panel self-contained — no elements cross gutters. Nine equal SQUARE panels in a 3x3 grid. Every panel has a 1:1 aspect ratio.

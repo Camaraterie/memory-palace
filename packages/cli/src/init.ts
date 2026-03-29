@@ -1,4 +1,9 @@
-import { getConfig, saveConfig, Config } from './config';
+import {
+    findProjectDir, readProjectConfig,
+    getGlobalConfig, saveGlobalConfig,
+    savePalaceConfig, PalaceConfig, GlobalConfig,
+    writeProjectConfig,
+} from './config';
 import { generateKeys } from './crypto';
 import { createPalace } from './api';
 import fs from 'fs';
@@ -36,34 +41,65 @@ export async function checkMcpConfig(binPath: string) {
     }
 }
 
-export async function initCommand(options: { geminiKey?: string }) {
+export async function initCommand(options: { geminiKey?: string; name?: string }) {
     try {
-        let existingConfig: Partial<Config> = {};
+        const cwd = process.cwd();
+
+        // --- Overwrite guard ---
+        const existingProject = readProjectConfig(cwd);
+        if (existingProject?.palace_id) {
+            console.error("This directory is already linked to a Memory Palace.");
+            console.error(`  Palace: ${existingProject.palace_id}`);
+            console.error("  To reinitialize, delete .palace/config.json first.");
+            console.error("  To use a different palace, run: mempalace switch <palace_id>");
+            process.exit(1);
+        }
+
+        // Preserve existing global gemini_key
+        let existingGeminiKey: string | undefined;
         try {
-            existingConfig = getConfig();
-            console.log("Memory Palace is already initialized. Overwriting will generate new keys.");
-        } catch (e) { /* expected if not initialized */ }
+            const global = getGlobalConfig();
+            existingGeminiKey = global.gemini_key;
+        } catch (e) { }
 
         console.log("Generating local cryptography keys...");
         const keys = generateKeys();
 
         console.log("Registering Palace with m.cuer.ai...");
-        const palaceId = await createPalace(keys.public_key);
+        const { palace_id: palaceId, admin_key: adminKey } = await createPalace(keys.public_key);
 
-        const config: Config = {
+        const palaceName = options.name || path.basename(cwd);
+
+        // Save palace credentials to per-palace file
+        const palaceConfig: PalaceConfig = {
             palace_id: palaceId,
+            guest_key: adminKey,
             palace_key: keys.palace_key,
             public_key: keys.public_key,
+            name: palaceName,
+            projects: [cwd],
+            created_at: new Date().toISOString(),
         };
+        savePalaceConfig(palaceConfig);
 
-        if (options.geminiKey) {
-            config.gemini_key = options.geminiKey;
-        } else if (existingConfig.gemini_key) {
-            config.gemini_key = existingConfig.gemini_key;
-        }
+        // Save global config
+        const geminiKey = options.geminiKey || existingGeminiKey;
+        const globalConfig: GlobalConfig = {
+            version: 3,
+            active_palace: palaceId,
+            ...(geminiKey ? { gemini_key: geminiKey } : {}),
+        };
+        saveGlobalConfig(globalConfig);
 
-        saveConfig(config);
+        // Write project-local pointer
+        writeProjectConfig(cwd, {
+            palace_id: palaceId,
+        });
+
         console.log(`✓ Palace initialized! Palace ID: ${palaceId}`);
+        console.log(`  Name: ${palaceName}`);
+        console.log(`  Credentials: ~/.memorypalace/palaces/${palaceId}.json`);
+        console.log();
 
         // Try to guess global installed bin path. Since we are local for now:
         const currentBinPath = path.resolve(__dirname, 'index.js');

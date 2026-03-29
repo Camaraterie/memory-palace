@@ -6,6 +6,12 @@
     "name": "Chris Camarata"
   },
   "repository": "https://github.com/Camaraterie/memory-palace",
-  "keywords": ["memory", "palace", "engram", "protocol", "agent-memory", "rooms"],
-  "hooks": "./hooks/hooks.json"
+  "keywords": [
+    "memory",
+    "palace",
+    "engram",
+    "protocol",
+    "agent-memory",
+    "rooms"
+  ]
 }

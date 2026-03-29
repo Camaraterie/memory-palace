@@ -1,8 +1,8 @@
 import fetch from 'node-fetch';
-import { getConfig, API_BASE } from './config';
+import { resolvePalaceConfig, API_BASE } from './config';
 
 function getAuthHeader(): string {
-    const conf = getConfig();
+    const conf = resolvePalaceConfig();
     return `Bearer ${conf.guest_key || conf.palace_id}`;
 }
 

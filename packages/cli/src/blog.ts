@@ -1,9 +1,13 @@
 import fetch from 'node-fetch';
-import { API_BASE, getConfig } from './config';
+import { API_BASE, resolvePalaceConfig } from './config';
 
 function getAuthToken() {
-    const config = getConfig();
-    return config.guest_key || config.palace_id;
+    try {
+        const config = resolvePalaceConfig();
+        return config.guest_key || config.palace_id;
+    } catch {
+        return null; // blog list/read can work without auth
+    }
 }
 
 export async function blogListCommand() {

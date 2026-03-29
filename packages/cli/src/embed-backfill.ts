@@ -1,10 +1,10 @@
 import fetch from 'node-fetch';
-import { API_BASE, getConfig } from './config';
+import { API_BASE, resolvePalaceConfig } from './config';
 import { generateEmbedding, buildDocumentText } from './embed';
 import { decryptPayload } from './crypto';
 
 export async function embedBackfillCommand(limit: number = 50) {
-    const config = getConfig();
+    const config = resolvePalaceConfig();
     const authToken = config.guest_key || config.palace_id;
 
     console.log(`Fetching up to ${limit} memories without embeddings...`);
@@ -43,7 +43,7 @@ export async function embedBackfillCommand(limit: number = 50) {
                     const parts = memory.ciphertext.split(':');
                     if (parts.length >= 3) {
                         const [iv, authTag, ...rest] = parts;
-                        payload = decryptPayload(config.palace_key, config.palace_id, rest.join(':'), iv, authTag);
+                        payload = decryptPayload(config.palace_key!, config.palace_id, rest.join(':'), iv, authTag);
                     } else {
                         throw new Error('unexpected format');
                     }

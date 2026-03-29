@@ -2,7 +2,7 @@ import fs from 'fs';
 import path from 'path';
 import FormData from 'form-data';
 import fetch from 'node-fetch';
-import { getConfig, API_BASE } from './config';
+import { resolvePalaceConfig, API_BASE } from './config';
 
 const MEMORIES_DIR = path.join(process.cwd(), '.palace', 'memories');
 
@@ -27,9 +27,9 @@ export async function attachImage(shortId: string, imagePath: string) {
     // Upload to hosted gallery via /api/upload
     let config;
     try {
-        config = getConfig();
+        config = resolvePalaceConfig();
     } catch {
-        console.warn('⚠ No config found — skipping upload. Run `mempalace init` to set up.');
+        console.warn('⚠ No palace found — skipping upload. Run `mempalace init` to set up.');
         return;
     }
 

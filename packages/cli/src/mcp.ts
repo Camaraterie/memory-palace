@@ -8,7 +8,7 @@ import {
 } from "@modelcontextprotocol/sdk/types.js";
 import { recoverMemory } from './recover';
 import { storeMemory } from './api';
-import { getConfig, MemoryPayload, getGeminiKey, API_BASE } from './config';
+import { resolvePalaceConfig, listAllPalaces, MemoryPayload, getGeminiKey, API_BASE } from './config';
 import { generateEmbedding, buildDocumentText } from './embed';
 import fetch from 'node-fetch';
 
@@ -140,6 +140,14 @@ export async function runMcpServer() {
                         },
                         required: ["slug", "name"]
                     }
+                },
+                {
+                    name: "palace_list",
+                    description: "List all configured Memory Palaces. Shows palace IDs, names, and which project directories are linked to each.",
+                    inputSchema: {
+                        type: "object",
+                        properties: {}
+                    }
                 }
             ]
         };
@@ -147,7 +155,7 @@ export async function runMcpServer() {
 
     server.setRequestHandler(CallToolRequestSchema, async (request) => {
         try {
-            const conf = getConfig();
+            const conf = resolvePalaceConfig();
             const authToken = (conf as any).guest_key || conf.palace_id;
             if (request.params.name === "recover") {
                 const short_id = request.params.arguments?.short_id as string;
@@ -272,6 +280,16 @@ export async function runMcpServer() {
                 const data = await res.json() as any;
                 return {
                     content: [{ type: "text", text: JSON.stringify(data, null, 2) }]
+                };
+            } else if (request.params.name === "palace_list") {
+                const palaces = listAllPalaces();
+                return {
+                    content: [{ type: "text", text: JSON.stringify(palaces.map(p => ({
+                        palace_id: p.palace_id,
+                        name: p.name || null,
+                        projects: p.projects,
+                        created_at: p.created_at || null,
+                    })), null, 2) }]
                 };
             } else if (request.params.name === "palace_room_intent") {
                 const args = request.params.arguments as any;

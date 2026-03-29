@@ -522,6 +522,22 @@ GET https://m.cuer.ai/api/ingest?auth=gk_<guest_key>&data=<base64url_json>
 
 `session_name`, `agent`, `status`, `outcome` (enum: `succeeded`/`failed`/`partial`/`in_progress`), `built`, `decisions`, `next_steps`, `files`, `blockers`, `conversation_context`, `roster`, `metadata`.
 
+**Auto-populated fields** (CLI injects these if missing — agents should still include them when known):
+
+| Field | Auto-detected from | Why it matters |
+|-------|-------------------|----------------|
+| `repo` | `git remote get-url origin` | Links memory to specific codebase |
+| `branch` | `git branch --show-current` | Shows what was being worked on |
+| `project_path` | Walk-up `.palace/` directory | Which local project generated this memory |
+| `palace_name` | Palace config | Human-readable palace label in cross-palace results |
+| `platform` | Env vars (`CLAUDECODE`, `CODEX`, `GEMINI_CLI`, etc.) | Which AI CLI tool created this memory |
+| `session_id` | Most recent session file for the detected platform | Find the exact conversation that produced this memory |
+| `session_path` | Platform-specific session directory | Full path to conversation transcript |
+| `os` | `os.platform()` + `os.release()` | Execution environment (e.g. `wsl2`, `macos`, `linux`) |
+| `team` | `~/.claude/teams/` config (most recently active team) | Claude Code agent team that was active |
+
+These fields are critical for cross-palace search and multi-project context. The CLI fills gaps automatically — agents should include them when they have better information (e.g. the agent knows its own session ID).
+
 **Simple field URL (no encoding — works for any agent that can browse):**
 
 Construct the URL directly with individual fields. No code interpreter needed.
@@ -568,6 +584,8 @@ payload = {
     "files": ["src/foo.js"],
     "blockers": [],
     "conversation_context": "Brief session description",
+    "repo": "https://github.com/user/project.git",
+    "branch": "main",
     "roster": {},
     "metadata": {}
 }
@@ -920,7 +938,7 @@ Call the `store` tool with the structured payload fields.
 
 Auth: `Bearer <palace_id>` (owner) or `Bearer gk_<guest_key>` (agent with write permission).
 
-Required payload fields: `session_name`, `agent`, `status`, `outcome` (enum: succeeded/failed/partial/in_progress), `built`, `decisions`, `next_steps`, `files`, `blockers`, `conversation_context`, `roster`, `metadata`. Missing any → 422.
+Required payload fields: `session_name`, `agent`, `status`, `outcome` (enum: succeeded/failed/partial/in_progress), `built`, `decisions`, `next_steps`, `files`, `blockers`, `conversation_context`, `roster`, `metadata`. Missing any → 422. Optional but recommended: `repo`, `branch`, `project_path`, `palace_name`, `team`, `platform`, `session_id`, `session_path`, `os`.
 
 ```bash
 curl -s -X POST "https://m.cuer.ai/api/store" \
@@ -939,6 +957,13 @@ curl -s -X POST "https://m.cuer.ai/api/store" \
       "files": ["src/foo.js"],
       "blockers": [],
       "conversation_context": "Brief session description",
+      "repo": "https://github.com/user/project.git",
+      "branch": "main",
+      "project_path": "/home/user/project",
+      "platform": "claude-code",
+      "session_id": "09c4df48-2734-40d2-9dae-c93c86fc8dcc",
+      "os": "wsl2 (6.6.87.2-microsoft-standard-WSL2)",
+      "team": "my-team",
       "roster": {},
       "metadata": {}
     }
@@ -1378,7 +1403,7 @@ For plaintext memories (`encrypted: false`), the `payload` field contains the pa
 ### POST /api/store — Store a memory (encrypted)
 
 Auth: `Bearer <palace_id>` or `Bearer gk_<guest_key>` (requires write or admin permission).
-Required payload fields: `session_name`, `agent`, `status`, `outcome`, `built`, `decisions`, `next_steps`, `files`, `blockers`, `conversation_context`, `roster`, `metadata`. See [Web Agent Access](#web-agent-access-eg-chatgpt) for full body shape.
+Required payload fields: `session_name`, `agent`, `status`, `outcome`, `built`, `decisions`, `next_steps`, `files`, `blockers`, `conversation_context`, `roster`, `metadata`. Optional: `repo`, `branch`, `project_path`, `palace_name`, `team`, `platform`, `session_id`, `session_path`, `os`. See [Web Agent Access](#web-agent-access-eg-chatgpt) for full body shape.
 
 ### GET /api/ingest — Store a memory via GET (plaintext, for sandboxed agents)
 

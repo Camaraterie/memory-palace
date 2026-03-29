@@ -1,10 +1,10 @@
-import { getConfig } from './config';
+import { resolvePalaceConfig } from './config';
 import { getMemoryRaw } from './api';
 import { decryptPayload, verifySignature } from './crypto';
 
 export async function verifyMemory(shortId: string) {
     try {
-        const conf = getConfig();
+        const conf = resolvePalaceConfig();
         const authToken = conf.guest_key || conf.palace_id;
         const raw = await getMemoryRaw(authToken, shortId);
 
@@ -25,6 +25,7 @@ export async function verifyMemory(shortId: string) {
 
         const [ivB64, authTagB64, ciphertextB64] = parts;
 
+        if (!conf.palace_key) { console.log('TAMPERED (no palace_key)'); return 'TAMPERED'; }
         const payload = decryptPayload(conf.palace_key, conf.palace_id, ciphertextB64, ivB64, authTagB64);
 
         if (raw.signature && conf.public_key) {
